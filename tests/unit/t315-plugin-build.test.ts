@@ -183,6 +183,38 @@ describe("t315 standalone plugin builder", () => {
     ).toEqual([]);
   });
 
+  test("Codex projection emits a repository marketplace Codex can discover", () => {
+    const pluginRoot = copyPlugin("codex-marketplace");
+    const outDir = join(scratch, "codex-marketplace-output");
+    const result = run([pluginRoot, "codex", outDir, "--json"]);
+    expect(result.status, result.stderr).toBe(0);
+
+    const marketplace = JSON.parse(
+      readFileSync(
+        join(outDir, ".agents", "plugins", "marketplace.json"),
+        "utf-8",
+      ),
+    ) as Record<string, unknown>;
+    expect(marketplace).toEqual({
+      name: "aidlc-plugins",
+      interface: { displayName: "AIDLC Plugins" },
+      plugins: [
+        {
+          name: "aidlc-test-pro",
+          source: { source: "local", path: "./" },
+          policy: {
+            installation: "AVAILABLE",
+            authentication: "ON_INSTALL",
+          },
+          category: "Productivity",
+        },
+      ],
+    });
+    expect(
+      existsSync(join(outDir, ".codex-plugin", "marketplace.json")),
+    ).toBe(false);
+  });
+
   test("the same plugin and harness can rebuild its owned projection", () => {
     const pluginRoot = copyPlugin("same-owner-rebuild");
     const outDir = join(scratch, "same-owner-output");

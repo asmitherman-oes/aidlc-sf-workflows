@@ -643,25 +643,42 @@ export function buildPluginProjection(
           2,
         )}\n`,
       );
-      writeFileSync(
-        join(hostManifestDir, "marketplace.json"),
-        `${JSON.stringify(
-          {
-            name: "aidlc-plugins",
-            owner: author,
-            description: "AIDLC plugin catalogue.",
-            plugins: [
-              {
-                name: `aidlc-${pluginName}`,
-                source: ".",
-                version,
-                description,
+      const marketplaceDir = options.target.harnessName === "codex"
+        ? join(outDir, ".agents", "plugins")
+        : hostManifestDir;
+      mkdirSync(marketplaceDir, { recursive: true });
+      const marketplace = options.target.harnessName === "codex"
+        ? {
+          name: "aidlc-plugins",
+          interface: { displayName: "AIDLC Plugins" },
+          plugins: [
+            {
+              name: `aidlc-${pluginName}`,
+              source: { source: "local", path: "./" },
+              policy: {
+                installation: "AVAILABLE",
+                authentication: "ON_INSTALL",
               },
-            ],
-          },
-          null,
-          2,
-        )}\n`,
+              category: "Productivity",
+            },
+          ],
+        }
+        : {
+          name: "aidlc-plugins",
+          owner: author,
+          description: "AIDLC plugin catalogue.",
+          plugins: [
+            {
+              name: `aidlc-${pluginName}`,
+              source: ".",
+              version,
+              description,
+            },
+          ],
+        };
+      writeFileSync(
+        join(marketplaceDir, "marketplace.json"),
+        `${JSON.stringify(marketplace, null, 2)}\n`,
       );
 
       copyHookTemplates(

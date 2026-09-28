@@ -1,0 +1,19 @@
+{
+  "name": "salesforce-sdlc",
+  "version": "0.1.0",
+  "description": "Salesforce specialization for the existing AI-DLC stage and agent system. Adds Salesforce methodology, stage guidance, a full-lifecycle scope, and environment diagnostics without replacing core stages or agents.",
+  "author": {
+    "name": "Austin Smitherman"
+  },
+  "dependencies": [
+    "core"
+  ],
+  "aidlc": {
+    "contributes": {
+      "overlays": "contributions/",
+      "scopes": "scopes/",
+      "knowledge": "knowledge/",
+      "tools": "tools/"
+    }
+  }
+}
