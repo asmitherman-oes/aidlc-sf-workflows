@@ -15,6 +15,32 @@ The plugin intentionally ships no replacement stages or agents. Salesforce DX
 MCP remains project configuration rather than a bundled authenticated service;
 teams explicitly allow only the org aliases and toolsets needed by each repo.
 
+## Install for Claude with Bash
+
+Clone this fork at `feat/salesforce-specialization`, then run from its root:
+
+```bash
+bash scripts/setup-salesforce-claude.sh /absolute/path/to/salesforce-project
+```
+
+On Windows use Git Bash paths, for example `/d/Projects/MySalesforceProject`.
+Quote paths containing spaces. The target must contain `sfdx-project.json` and
+belong to a Git repository. Install Git and Bun first; Claude Code is required
+to launch the workflow. Dependency installation requires network access.
+
+The script builds this checkout, installs the Claude runtime, directly composes
+the Salesforce extension, checks all 33 scope stages and the generated runner,
+and sets Salesforce as the project default scope. No marketplace installation
+is necessary. It preserves `.mcp.json`, appends runtime ignore rules, and refuses
+existing `.claude` or `aidlc` paths. It is a fresh-install helper, not an updater;
+if interrupted after copying, inspect the partial installation before retrying.
+It does not authenticate to Salesforce or deploy metadata.
+
+Open Claude in the target project, review project/hook trust, and run
+`/aidlc --doctor`, then `/aidlc --scope salesforce-sdlc-standard`. Configure
+Salesforce DX MCP separately. The current plugin doctor's MCP check is
+Codex-specific; its advisory does not establish Claude MCP connectivity.
+
 ## Validate and build for Codex
 
 From the AI-DLC repository root:
