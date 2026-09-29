@@ -4,14 +4,18 @@ set -euo pipefail
 
 usage() {
   printf '%s\n' \
-    'Usage: bash scripts/setup-salesforce-claude.sh /path/to/salesforce-project' \
+    'Usage: bash scripts/setup-salesforce-claude.sh /path/to/salesforce-project [standard|express]' \
     'Requires Git, Bun, and a Salesforce DX Git project.' \
     'Existing .claude or aidlc directories are refused; no files are overwritten.' \
     'Run from a checkout of the Salesforce-specialized AI-DLC fork.'
 }
 fail() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 if [[ ${1:-} == --help || ${1:-} == -h ]]; then usage; exit 0; fi
-[[ $# == 1 ]] || { usage >&2; exit 2; }
+[[ $# == 1 || $# == 2 ]] || { usage >&2; exit 2; }
+case ${2:-standard} in
+  standard|express) export SALESFORCE_INSTALL_SCOPE="salesforce-sdlc-${2:-standard}" ;;
+  *) fail 'Choose standard or express.' ;;
+esac
 
 SCRIPT_DIR=${BASH_SOURCE[0]%/*}
 SOURCE_DIR=$(cd -- "$SCRIPT_DIR/.." && pwd -P)
@@ -72,11 +76,14 @@ fi
   # Verify the resulting graph, scope runner, and agent guidance explicitly.
   bun -e '
     const fs = require("node:fs");
-    const scope = "salesforce-sdlc-standard";
+    const scope = process.env.SALESFORCE_INSTALL_SCOPE;
     const grid = JSON.parse(fs.readFileSync(".claude/tools/data/scope-grid.json", "utf8"));
     const stages = Object.values(grid[scope]?.stages ?? {});
-    if (stages.length !== 33 || stages.some(s => s !== "EXECUTE"))
-      throw new Error("Salesforce scope did not compose with all 33 stages.");
+    const expected = scope === "salesforce-sdlc-express" ? grid.express?.stages : grid["salesforce-sdlc-standard"]?.stages;
+    if (stages.length !== 33 || !expected || Object.keys(expected).some(k => grid[scope].stages[k] !== expected[k]))
+      throw new Error("Salesforce scope stage membership is incorrect.");
+    if (scope === "salesforce-sdlc-standard" && stages.some(s => s !== "EXECUTE"))
+      throw new Error("Full Salesforce scope must include all stages.");
     if (!fs.existsSync(`.claude/skills/${scope}/SKILL.md`))
       throw new Error("Salesforce scope runner was not generated.");
     if (!fs.existsSync(".claude/knowledge/aidlc-developer-agent/salesforce-sdlc.md"))
@@ -85,7 +92,7 @@ fi
     const settings = JSON.parse(fs.readFileSync(path, "utf8"));
     settings.env = { ...settings.env, AWS_AIDLC_DEFAULT_SCOPE: scope };
     fs.writeFileSync(path, JSON.stringify(settings, null, 2) + "\n");
-    console.log("Verified Salesforce scope: 33 stages; runner and developer guidance present.");
+    console.log(`Verified ${scope}: ${stages.filter(s => s === "EXECUTE").length} selected stages; runner and developer guidance present.`);
   '
 )
 
@@ -96,7 +103,7 @@ printf '\n%s\n' \
   'Your existing .mcp.json was preserved. Configure Salesforce DX MCP separately if needed.' \
   'Next: open Claude in the project, review project/hook trust, and run:' \
   '  /aidlc --doctor' \
-  '  /aidlc --scope salesforce-sdlc-standard' \
+  "  /aidlc --scope $SALESFORCE_INSTALL_SCOPE" \
   'The current plugin doctor checks Codex MCP config; its MCP advisory is not a Claude connectivity test.'
 printf '\ncd %q\nclaude\n' "$PROJECT_DIR"
 if ! command -v claude >/dev/null; then

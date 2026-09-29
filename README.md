@@ -138,7 +138,7 @@ for the architecture and methodology.
 - `core/` - hand-authored, harness-neutral methodology and engine
 - `core/tools/` - 80 aidlc-*.ts engine and authoring tools
 - `harness/<name>/` - thin, harness-specific manifests and integrations
-- `plugins/<name>/` - optional AIDLC plugins; `salesforce-sdlc` specializes all 33 core stages for Salesforce DX without replacing them
+- `plugins/<name>/` - optional AIDLC plugins; `salesforce-sdlc` provides full-lifecycle and Express demo scopes for Salesforce DX without replacing core stages
 - `scripts/` - packaging, binary, installer, and release tooling
 - `tests/` - smoke, unit, integration, and end-to-end tests
 - `docs/` - user, harness-engineering, and developer documentation

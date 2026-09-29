@@ -12,6 +12,25 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(HERE, "..");
 
 describe("salesforce-sdlc plugin content", () => {
+  for (const harness of ["claude", "codex"] as const) {
+    test(`Express composes with core Express membership and demo guidance in ${harness}`, () => {
+      const fixture = composePluginFixture({ plugin: "salesforce-sdlc", harness });
+      try {
+        expect(fixture.dropLogs).toBe("");
+        const root = join(fixture.projectDir, `.${harness}`);
+        const grid = JSON.parse(readFileSync(join(root, "tools/data/scope-grid.json"), "utf8"));
+        expect(grid["salesforce-sdlc-express"].stages).toEqual(grid.express.stages);
+        expect(Object.values(grid["salesforce-sdlc-express"].stages).filter(s => s === "EXECUTE")).toHaveLength(10);
+        const skills = harness === "codex" ? join(fixture.projectDir, ".agents/skills") : join(root, "skills");
+        expect(existsSync(join(skills, "salesforce-sdlc-express/SKILL.md"))).toBe(true);
+        const stage = readFileSync(join(root, "aidlc-common/stages/construction/code-generation.md"), "utf8");
+        expect(stage).toContain("or `salesforce-sdlc-express`");
+        expect(stage).toContain("Do not require artifacts from skipped design");
+      } finally {
+        rmSync(dirname(fixture.projectDir), { recursive: true, force: true });
+      }
+    });
+  }
   test("passes the reusable plugin validator", () => {
     expect(validatePluginContent(PLUGIN_ROOT)).toEqual([]);
   });

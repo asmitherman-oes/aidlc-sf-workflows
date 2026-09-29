@@ -5,6 +5,7 @@ agent roster intact while specializing their behavior for Salesforce DX
 projects. It contributes:
 
 - a comprehensive `salesforce-sdlc-standard` scope covering every core stage;
+- a minimal `salesforce-sdlc-express` scope for greenfield and brownfield demos;
 - mandatory Salesforce methodology for the existing product, architecture,
   development, quality, security, delivery, and operations agents;
 - stage-specific instructions at the decisions where Salesforce differs most
@@ -14,6 +15,33 @@ projects. It contributes:
 The plugin intentionally ships no replacement stages or agents. Salesforce DX
 MCP remains project configuration rather than a bundled authenticated service;
 teams explicitly allow only the org aliases and toolsets needed by each repo.
+
+## Salesforce Express demos
+
+Choose `salesforce-sdlc-express` for a small demo in a new DX project or an
+existing Salesforce codebase. It uses core Express membership: 10 selected
+stages including initialization, with 23 skipped. Reverse engineering and the
+deployment tail retain their stage-level applicability checks. It uses Minimal
+depth with formal reviewers, strict guards, sensors, learnings, and summary
+confirmation off. Relevant Salesforce implementation and verification guidance
+still applies. Demo guidance covers focused discovery, synthetic data, a short
+happy-path acceptance checklist, reset steps, and production-readiness gaps.
+
+In Claude use `/aidlc --scope salesforce-sdlc-express`; in Codex use
+`$aidlc --scope salesforce-sdlc-express`. The full
+`salesforce-sdlc-standard` scope remains available and remains the installer's
+default for backward compatibility.
+
+For a fresh Claude installation with Express as the default:
+
+```bash
+bash scripts/setup-salesforce-claude.sh /absolute/path/to/salesforce-project express
+```
+
+The installer is not an updater. Existing installations need the rebuilt plugin
+composed into their runtime before selecting the new scope. Existing cached
+host plugins also need refreshing; rebuilding the fork alone does not refresh
+an installed host cache.
 
 ## Install for Claude with Bash
 
@@ -29,8 +57,8 @@ belong to a Git repository. Install Git and Bun first; Claude Code is required
 to launch the workflow. Dependency installation requires network access.
 
 The script builds this checkout, installs the Claude runtime, directly composes
-the Salesforce extension, checks all 33 scope stages and the generated runner,
-and sets Salesforce as the project default scope. No marketplace installation
+the Salesforce extension, checks the selected scope membership and generated runner,
+and sets that scope as the project default. No marketplace installation
 is necessary. It preserves `.mcp.json`, appends runtime ignore rules, and refuses
 existing `.claude` or `aidlc` paths. It is a fresh-install helper, not an updater;
 if interrupted after copying, inspect the partial installation before retrying.
