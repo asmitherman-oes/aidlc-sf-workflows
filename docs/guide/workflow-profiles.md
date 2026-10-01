@@ -199,6 +199,29 @@ You can force that path with:
 /aidlc compose "harden the deployment pipeline and add observability"
 ```
 
+## Plugin workflow profiles
+
+An installed [AIDLC plugin](../reference/18-plugin-mechanism.md) can ship its
+own profile. Plugin profiles appear in the scope grid once the plugin is
+composed and are started the same way.
+
+### Salesforce Classic (`salesforce` plugin)
+
+**Choose `salesforce-classic` when:** you are building on the Salesforce
+platform (Apex, Lightning Web Components, Flows, custom objects, permission
+sets) and want classic's one-approval-per-stage ceremony with Salesforce domain
+experts. Start it with `/salesforce-classic` or
+`/aidlc --scope salesforce-classic`.
+
+It runs classic's Inception and Construction route with Salesforce guidance
+added to each stage, without Infrastructure Design (AWS-led). It adds
+Salesforce Org Analysis, Solution Design, Data Model Design, and Security Model
+Design at the end of Inception, Salesforce Org Validation (scratch org or
+sandbox deploy, Apex tests with coverage, Code Analyzer) at the end of
+Construction, and a conditional Salesforce Release Deployment. Org work goes
+through the Salesforce DX MCP server. See
+[`plugins/salesforce/README.md`](../../plugins/salesforce/README.md).
+
 ## Construction approvals and execution
 
 New source-producing solo Unit workflows default to building one Unit at a
