@@ -115,15 +115,34 @@ so it works with whichever org you set as the default (`--set-default` /
 
 ### 4. Install the plugin in Claude Code
 
-Open Claude Code in your Salesforce DX project folder and run:
+Install the plugin **for this project only**. Claude Code's default plugin
+scope is `user`, which enables a plugin in every project you open. With a
+system-wide AI-DLC on the same machine, that would merge the Salesforce stages
+into your other AI-DLC projects. From your Salesforce DX project folder, in a
+terminal:
 
-```
-/plugin marketplace add /path/to/aidlc-sf-workflows/dist/plugins/salesforce/claude
-/plugin install aidlc-salesforce@aidlc-plugins
+```bash
+claude plugin marketplace add /path/to/aidlc-sf-workflows/dist/plugins/salesforce/claude --scope local
+claude plugin install aidlc-salesforce@aidlc-plugins --scope local
 ```
 
-On Windows use the full path, for example
+The scope options:
+
+- `local` enables the plugin only in this project, only for you, and records
+  it in `.claude/settings.local.json`, which is not committed.
+- `project` instead records it in `.claude/settings.json`, so everyone who
+  opens the repository gets it.
+- `user` is never what you want here.
+
+If you use the `/plugin` menu inside Claude Code instead, choose the **project**
+or **local** scope when it asks. On Windows use the full path, for example
 `C:/Users/you/aidlc-sf-workflows/dist/plugins/salesforce/claude`.
+
+**Side by side with the standard AI-DLC:** everything in this setup is per
+project. That covers the fork's core in `.claude/` and `aidlc/`, the
+`salesforce-dx` entry in `.mcp.json`, the sf-skills in `.claude/skills/`, and
+the plugin at `local` or `project` scope. Your system-wide `aidlc` and your
+other AI-DLC projects keep working exactly as before.
 
 **Restart Claude Code twice.** The first start composes the plugin into the
 project. The second loads the newly added Salesforce stages and the
@@ -187,6 +206,42 @@ Then:
    Bun build" is `ok`.
 3. Run `/salesforce-classic` again. An intent the failed run already created
    picks up where it stopped.
+
+**Salesforce stages appeared in other, non-Salesforce AI-DLC projects.** The
+plugin was installed at the default `user` scope. With a system-wide `aidlc`
+on your PATH, every Claude Code session then merged the plugin into whichever
+AI-DLC project was open.
+
+To fix it:
+
+1. **Remove the user-wide install**, then reinstall at `local` scope in the
+   Salesforce project, as in step 4:
+
+   ```bash
+   claude plugin uninstall aidlc-salesforce@aidlc-plugins --scope user
+   ```
+
+2. **Clean each affected non-Salesforce project.** From that project's folder,
+   turn the plugin off. This strips the Salesforce steps it added to the core
+   stage files and removes its stages, scope, and commands from the workflow:
+
+   ```bash
+   aidlc engine plugin select aidlc
+   ```
+
+   Then delete the leftover files. They're inactive, but remove them anyway:
+
+   ```bash
+   rm -f .claude/aidlc-common/stages/*/salesforce-*.md .claude/scopes/salesforce-*.md \
+     .claude/sensors/aidlc-salesforce-*.md .claude/tools/aidlc-sensor-salesforce-*.ts \
+     .claude/tools/salesforce-doctor.ts .claude/tools/data/plugin-*-salesforce.json
+   rm -rf .claude/skills/salesforce-*
+   aidlc engine graph compile
+   ```
+
+   Run `/aidlc --doctor` in that project to confirm it is clean. If the
+   project has no system-wide `aidlc`, use `bun .claude/tools/aidlc.ts` in
+   place of `aidlc`.
 
 ### Updating
 

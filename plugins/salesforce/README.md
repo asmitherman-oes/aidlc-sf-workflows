@@ -91,12 +91,18 @@ sf org login web --alias devhub --set-default-dev-hub
 The shipped `.mcp.json` registers `salesforce-dx`, which runs
 `npx -y @salesforce/mcp --orgs DEFAULT_TARGET_ORG,DEFAULT_TARGET_DEV_HUB --toolsets orgs,metadata,data,users,testing,code-analysis,lwc-experts,aura-experts,scale-products,experts-validation --allow-non-ga-tools`.
 
-Then, in Claude Code:
+Then install the plugin **for that project only**. Run this from the Salesforce
+DX project folder:
 
+```bash
+claude plugin marketplace add /path/to/aidlc-sf-workflows/dist/plugins/salesforce/claude --scope local
+claude plugin install aidlc-salesforce@aidlc-plugins --scope local
 ```
-/plugin marketplace add /path/to/aidlc-sf-workflows/dist/plugins/salesforce/claude
-/plugin install aidlc-salesforce@aidlc-plugins
-```
+
+Never install it at the default `user` scope. That enables it in every project,
+and a system-wide `aidlc` would then merge the Salesforce stages into your other
+AI-DLC projects. The root README's Troubleshooting section shows how to clean
+up after a user-scope install.
 
 Restart Claude Code twice. The first start composes the plugin; the second
 registers the new runners. Then:
