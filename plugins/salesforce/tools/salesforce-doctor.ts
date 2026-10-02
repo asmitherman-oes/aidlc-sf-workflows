@@ -140,6 +140,17 @@ function main(): void {
       severity: "error",
     },
     {
+      // The fork ships no native `aidlc` binary. A core installed from
+      // dist-release/ wires every hook to `aidlc engine ...`, which is either
+      // missing or the upstream engine, so rule delivery fails before the
+      // first stage. The Bun projection (dist/claude) invokes the fork's own
+      // engine through bun.
+      pass: harnessDir !== ".claude" || !/"command":\s*"aidlc engine /.test(settings),
+      label: "core installed from the fork's Bun build (hooks run the fork engine via bun)",
+      fix: "From the fork: bun scripts/package.ts, then bun <fork>/dist/claude/.claude/tools/aidlc.ts config --harness claude --from <fork>/dist/claude --project-dir <project> --mcp defaults --force --yes, then restart Claude Code.",
+      severity: "error",
+    },
+    {
       pass: servers.length > 0,
       label: "Salesforce DX MCP server (@salesforce/mcp) configured",
       fix: mcpFix,

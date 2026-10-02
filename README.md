@@ -60,9 +60,14 @@ bun install
 bun scripts/package.ts
 ```
 
-`bun scripts/package.ts` writes the installable core to `dist-release/claude/`
-and the Claude plugin to `dist/plugins/salesforce/claude/`. Re-run it after
-every `git pull`.
+`bun scripts/package.ts` writes the installable core to `dist/claude/` and the
+Claude plugin to `dist/plugins/salesforce/claude/`. Re-run it after every
+`git pull`.
+
+> Install from **`dist/claude`**, not `dist-release/claude`. The `dist-release`
+> build expects a native `aidlc` program, which this fork doesn't provide. Its
+> hooks then fail before the first stage, with an error about loading the rule
+> bundle.
 
 ### 2. Install the fork's core into your Salesforce DX project
 
@@ -73,16 +78,16 @@ macOS / Linux / WSL, from the `aidlc-sf-workflows` folder:
 
 ```bash
 FORK="$PWD"
-bun "$FORK/dist-release/claude/.claude/tools/aidlc.ts" config --harness claude \
-  --from "$FORK/dist-release/claude" --project-dir /path/to/your-sfdx-project --mcp defaults --yes
+bun "$FORK/dist/claude/.claude/tools/aidlc.ts" config --harness claude \
+  --from "$FORK/dist/claude" --project-dir /path/to/your-sfdx-project --mcp defaults --yes
 ```
 
 Windows PowerShell, from the `aidlc-sf-workflows` folder:
 
 ```powershell
 $FORK = (Get-Location).Path
-bun "$FORK\dist-release\claude\.claude\tools\aidlc.ts" config --harness claude `
-  --from "$FORK\dist-release\claude" --project-dir C:\path\to\your-sfdx-project --mcp defaults --yes
+bun "$FORK\dist\claude\.claude\tools\aidlc.ts" config --harness claude `
+  --from "$FORK\dist\claude" --project-dir C:\path\to\your-sfdx-project --mcp defaults --yes
 ```
 
 This adds `.claude/` (agents, stages, hooks, and the tool-call recorder) and
@@ -156,6 +161,32 @@ Then start a Salesforce workflow:
 for one approval per stage. Org Validation deploys only to a scratch org or
 sandbox, and Release Deployment asks you to confirm the target org by name
 before it writes to it.
+
+### Troubleshooting
+
+**`/salesforce-classic` stops before the first stage with a snag loading the
+rule bundle.** The project's core was installed from `dist-release/claude`, as
+an earlier version of these instructions said. Its hooks therefore call a
+native `aidlc` program instead of this fork's engine. To repair it, run these
+from the `aidlc-sf-workflows` folder:
+
+```bash
+bun scripts/package.ts
+bun dist/claude/.claude/tools/aidlc.ts config --harness claude --from dist/claude \
+  --project-dir /path/to/your-sfdx-project --mcp defaults --force --yes
+```
+
+`--force` is needed because the plugin added Salesforce steps to some of the
+core stage files, which the installer would otherwise refuse to replace.
+
+Then:
+
+1. Restart Claude Code twice, so the plugin re-adds its Salesforce steps to
+   the refreshed core.
+2. Run `/aidlc --doctor` and confirm the row "core installed from the fork's
+   Bun build" is `ok`.
+3. Run `/salesforce-classic` again. An intent the failed run already created
+   picks up where it stopped.
 
 ### Updating
 
