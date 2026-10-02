@@ -2382,11 +2382,8 @@ describe("t243 project initialization", () => {
     };
     expect(baseline.rootContributions[".mcp.json"].policy).toBe("json-map");
     expect(Object.keys(baseline.rootContributions[".mcp.json"].entries).sort()).toEqual([
-      "aws-iac",
-      "aws-mcp",
-      "aws-pricing",
-      "aws-serverless",
       "context7",
+      "salesforce-dx",
     ]);
 
     const disabled = run(INIT, [

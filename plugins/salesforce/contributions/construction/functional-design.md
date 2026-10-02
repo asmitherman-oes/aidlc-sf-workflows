@@ -20,24 +20,22 @@ fragments:
 
 ### Step 4a (salesforce): Salesforce automation design
 
-When the work targets Salesforce, read `salesforce-build-approach-matrix.md`,
-`salesforce-solution-blueprint.md`, and `salesforce-data-dictionary.md` for
-this Unit. Then add to `functional-spec.md`:
+When the work targets Salesforce, first read this Unit's rows in
+`salesforce-build-approach-matrix.md`, `salesforce-solution-blueprint.md`, and
+`salesforce-data-dictionary.md`. Then add the following:
 
-- `## Salesforce Automation Design`: per object event this Unit touches, the
-  owning automation (trigger handler method or named Flow), entry criteria,
-  before- or after-save placement, and where it sits in the platform order of
-  execution (before-save flows, before triggers, validation rules, after
-  triggers, after-save flows, assignment and escalation rules, roll-up
-  summaries, post-commit logic). Include a recursion guard where an update can
-  re-fire automation.
-- `## Error Handling on Platform`: how failures surface to users (`addError` on
-  the record or field vs thrown `AuraHandledException`), partial-success DML
-  (`Database.insert(records, false)`) vs all-or-none, and what is logged.
-- In `entities.md`, use the Salesforce field API names and types from the data
-  dictionary, not platform-neutral types.
-- In `rules.md`, mark each business rule's realisation: validation rule,
-  formula, Flow decision, or Apex.
+- **`## Salesforce Automation Design` in `functional-spec.md`.** For each object
+  event the Unit touches, give:
+  - the owning automation: a trigger handler method or a named Flow;
+  - its entry criteria and whether it runs before-save or after-save;
+  - where it sits in the save order of execution;
+  - its recursion guard.
 
-Methodology: `{{HARNESS_DIR}}/knowledge/salesforce-admin-agent/salesforce-declarative-guide.md`
-and `{{HARNESS_DIR}}/knowledge/salesforce-developer-agent/salesforce-apex-guide.md`.
+  Take the order of execution and Flow capabilities from **`platform-docs-get`**
+  and **`automation-flow-generate`**, and Apex trigger patterns from
+  **`platform-apex-generate`**.
+- **`## Error Handling on Platform`.** Cover `addError` versus
+  `AuraHandledException`, partial-success DML, and logging.
+- **`entities.md`.** Use the field API names and types from the data dictionary.
+- **`rules.md`.** Mark how each business rule is realised: validation rule
+  (**`platform-validation-rule-generate`**), formula, Flow, or Apex.

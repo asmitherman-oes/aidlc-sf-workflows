@@ -27,12 +27,15 @@ runner: true
 
 `salesforce-classic` is the `classic` workflow profile re-cut for Salesforce
 platform delivery. It keeps classic's v1-style ceremony, with one human approval
-per stage, and routes the work through Salesforce domain experts. It covers
-Salesforce DX source projects, Apex, Lightning Web Components, Flows, custom
-objects, and the security model. The salesforce plugin adds Salesforce-specific
-questions, artifacts, and sensors to the core Inception and Construction stages.
-It then adds Salesforce design, org validation, and release stages that the
-plugin's own agents lead.
+per stage, and keeps the existing AIDLC agents. It covers Salesforce DX source
+projects, Apex, Lightning Web Components, Flows, custom objects, and the
+security model. The agents do the underlying Salesforce work through Salesforce's
+own tooling: the agent skills in `forcedotcom/sf-skills` and the Salesforce DX
+MCP server. The salesforce plugin adds Salesforce-specific questions,
+artifacts, and the required skill and tool calls to the core Inception and
+Construction stages. It then adds Salesforce design, org validation, and release
+stages. A blocking gate sensor, `salesforce-tool-usage`, checks the recorded
+skill and tool calls before each of those stages is approved.
 
 Settings match `classic`: Standard depth and test strategy, advisory reviews
 (one pass, findings shown at the approval gate), Guard Policy off, sensors and

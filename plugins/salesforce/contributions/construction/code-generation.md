@@ -7,6 +7,8 @@ adds:
   consumes:
     - artifact: salesforce-solution-blueprint
       required: false
+    - artifact: salesforce-build-approach-matrix
+      required: false
     - artifact: salesforce-environment-strategy
       required: false
     - artifact: salesforce-data-dictionary
@@ -14,8 +16,7 @@ adds:
     - artifact: salesforce-access-matrix
       required: false
   sensors:
-    - salesforce-apex-antipatterns
-    - salesforce-lwc-styling
+    - salesforce-tool-usage
 fragments:
   - anchor: before-step:3
     order: 100
@@ -31,56 +32,66 @@ fragments:
 
 When the work targets Salesforce, the code generation plan for this Unit must:
 
-- List every metadata file to create or change, with its source-format path
-  under the Unit's package directory: Apex classes and triggers **with** their
-  `-meta.xml` (at the project `sourceApiVersion`), LWC bundles (`.html`, `.js`,
-  `.css`, `.js-meta.xml`, `__tests__/*.test.js`), object and field
-  `*.object-meta.xml` and `*.field-meta.xml` files, flows, permission sets,
-  custom labels, and custom metadata records.
-- Order steps by deploy dependency: schema, then Apex domain and selector, then
-  service, then trigger and handler, then LWC, then flows, then permission sets
-  (field and class access), then tests.
-- Include an Apex test class step for every Apex class, covering the
-  single-record, bulk (200), negative, and `System.runAs` paths from
-  `salesforce-access-matrix.md`, and a Jest test step for every LWC.
-- State unit-scoped test commands in `unit-test-instructions.md`: for Apex,
-  `sf apex run test --class-names <Unit test classes> --code-coverage --result-format json --target-org <validation org>`
-  (executed in Build and Test when an org is authorized, otherwise in
-  Salesforce Org Validation); for LWC,
-  `npx sfdx-lwc-jest -- <Unit lwc paths>`.
+- Name the Salesforce skill or MCP tool for every plan step, taken from the
+  Unit's rows in `salesforce-build-approach-matrix.md` and from
+  `{{HARNESS_DIR}}/knowledge/aidlc-shared/salesforce-tooling.md`:
+  - Apex: `platform-apex-generate`.
+  - Apex tests: `platform-apex-test-generate`.
+  - LWC: `experience-lwc-generate` with the MCP `orchestrate_lwc_component_creation`.
+  - Objects and fields: `platform-custom-object-generate` / `platform-custom-field-generate`.
+  - Flows: `automation-flow-generate`.
+  - Permission sets: `platform-permission-set-generate`.
+  - Lightning pages: `platform-flexipage-generate`.
+  - Validation rules: `platform-validation-rule-generate`.
+  - Custom Metadata Types: `platform-custom-metadata-type-generate`.
+  - Every metadata generator: also `platform-metadata-api-context-get`.
+- Order the steps by deploy dependency: schema, then Apex, then LWC, then Flows,
+  then permission sets, then tests.
+- End with a verification step:
+  - MCP `scan_apex_class_for_antipatterns` and `run_code_analyzer` on all Apex;
+  - `design-systems-slds-validate` and `experience-lwc-security-validate` on
+    LWCs;
+  - MCP `create_lwc_jest_tests` / `review_lwc_jest_tests` for the LWC Jest tests.
+- List every written path in `source-manifest.json`. The salesforce gate derives
+  this Unit's required Salesforce calls from that list.
 
 ## fragment: before-step:4
 
 ### Step 3a (salesforce): Salesforce delegation context
 
-When the work targets Salesforce, add these to the Step 4 delegation prompt as
-exact paths, without copying their prose into the brief:
+When the work targets Salesforce, add these instructions to the Step 4
+delegation prompt. Give file paths only; do not copy their prose into the
+prompt.
 
-- `{{HARNESS_DIR}}/knowledge/salesforce-developer-agent/salesforce-apex-guide.md`
-- `{{HARNESS_DIR}}/knowledge/salesforce-developer-agent/salesforce-lwc-guide.md`
-- `{{HARNESS_DIR}}/knowledge/salesforce-developer-agent/salesforce-dx-project-guide.md`
-- `{{HARNESS_DIR}}/knowledge/salesforce-security-agent/salesforce-security-guide.md`
-- `{{HARNESS_DIR}}/knowledge/salesforce-qa-agent/salesforce-testing-guide.md`
-- this Unit's Salesforce design inputs: `salesforce-solution-blueprint.md`,
-  `salesforce-data-dictionary.md`, and `salesforce-access-matrix.md` when
-  produced
-
-Also add these instructions:
-- Read each listed guide before writing Salesforce source, and treat its MUST
-  rules as coding standards.
-- Use the Salesforce DX MCP `run_soql_query` (read-only) to confirm field API
-  names in the analysed org when one is connected.
-- Do NOT deploy, assign permissions, or delete orgs during Code Generation; org
-  writes belong to Salesforce Org Validation.
-- If the `salesforce-lwc-slds2` skill is available, use it for LWC markup and CSS.
+- Read `{{HARNESS_DIR}}/knowledge/aidlc-shared/salesforce-tooling.md`, then
+  invoke the Salesforce skill or MCP tool that the plan names for each step
+  **before** writing that step's files, and follow it. Do not hand-write
+  Salesforce metadata, Apex, LWC, or Flows when a Salesforce skill exists for
+  them.
+- Pass this Unit's Salesforce design inputs as paths:
+  `salesforce-build-approach-matrix.md`, `salesforce-solution-blueprint.md`,
+  `salesforce-data-dictionary.md`, and `salesforce-access-matrix.md`, when they
+  were produced.
+- Run the verification step's analyzers on everything written, and fix any
+  severity 1–2 findings.
+- Do NOT deploy, assign permissions, or delete orgs. Org writes belong to
+  Salesforce Org Validation.
 
 ## fragment: in:Sensors
 
-The salesforce plugin wires two ADVISORY code sensors onto this stage:
-`salesforce-apex-antipatterns` fires on each written `.cls`/`.trigger` file
-(SOQL or DML in loops, hardcoded Ids, missing sharing declaration,
-`SeeAllData=true`, empty catch blocks, logic in triggers), and
-`salesforce-lwc-styling` fires on each written LWC `.css` file (hardcoded
-colors, deprecated `--lwc-*`/`--sds-*`/`--slds-c-*` hooks, reassigned global
-hooks, `!important`). They report; they do not block. Fix their findings
-before the plan step is marked complete.
+The salesforce plugin binds the BLOCKING `salesforce-tool-usage` gate sensor to
+this stage. Before the approval gate opens, it reads the tool-call ledger
+recorded by the `record-tool-calls` hook. It then requires the Salesforce calls
+that match what this Unit's `source-manifest.json` says was written:
+
+- Apex: `platform-apex-generate`, plus `scan_apex_class_for_antipatterns`,
+  `run_code_analyzer`, or `dx-code-analyzer-run`.
+- Apex tests: `platform-apex-test-generate`.
+- LWC: an LWC expert tool or skill, plus a Jest tool.
+- LWC CSS: an SLDS skill.
+- Aura: the Aura migration tooling.
+- Metadata: the matching `platform-*` or `automation-flow-generate` skill, plus
+  `platform-metadata-api-context-get`.
+
+Any missing call keeps the gate closed until it is made, or until the human
+overrides.

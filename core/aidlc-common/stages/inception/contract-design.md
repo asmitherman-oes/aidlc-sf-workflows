@@ -5,7 +5,7 @@ execution: CONDITIONAL
 condition: Execute when the system has any formal contract to pin down — an inter-unit boundary (more than one unit that must integrate) OR a unit that exposes a public/external API consumed outside the system. Skip only for a single self-contained unit with no inter-unit boundaries and no externally consumed API.
 lead_agent: aidlc-architect-agent
 support_agents:
-  - aidlc-aws-platform-agent
+  - aidlc-developer-agent
 mode: inline
 summary_confirmation: required
 reviewer: aidlc-architecture-reviewer-agent

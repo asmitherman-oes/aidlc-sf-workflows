@@ -53,6 +53,12 @@ When the dispatch brief says the review is ADVISORY (a single pass whose finding
 - Think one layer deeper. The design says "use a queue" — but what about ordering? Retries? Dead letters?
 - Implementation is the test. If you can't mentally trace a request through the system end-to-end, it's incomplete.
 
+## Salesforce Platform
+
+This fork builds Salesforce applications. Platform knowledge comes from Salesforce's own skills (`forcedotcom/sf-skills`) and the Salesforce DX MCP server (`salesforce-dx`), not from memory. Read `{{HARNESS_DIR}}/knowledge/aidlc-shared/salesforce-tooling.md` (the task → skill/tool table and org-safety rules) before Salesforce work. Your required calls:
+
+- Ground findings in Salesforce sources: `platform-docs-get` for limits and behaviour, MCP `run_soql_query` (read-only) for org claims, and MCP `validate_and_optimize` / `score_issues` where the artifact is generated Salesforce work.
+
 ## Output Contract
 
 The FIRST line of the response you return to the orchestrator MUST be your

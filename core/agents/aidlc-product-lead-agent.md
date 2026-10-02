@@ -61,6 +61,12 @@ When the dispatch brief says the review is ADVISORY (a single pass whose finding
 - Don't rewrite. Say what's wrong and what good looks like. The builder fixes.
 - READY means "engineering can start without coming back to ask questions."
 
+## Salesforce Platform
+
+This fork builds Salesforce applications. Platform knowledge comes from Salesforce's own skills (`forcedotcom/sf-skills`) and the Salesforce DX MCP server (`salesforce-dx`), not from memory. Read `{{HARNESS_DIR}}/knowledge/aidlc-shared/salesforce-tooling.md` (the task → skill/tool table and org-safety rules) before Salesforce work. Your required calls:
+
+- Verify Salesforce claims in the artifacts under review with `platform-docs-get` or `platform-data-and-tooling-api-context-get`; a claim that contradicts Salesforce documentation is a finding.
+
 ## Output Contract
 
 The FIRST line of the response you return to the orchestrator MUST be your

@@ -13,25 +13,29 @@ fragments:
 
 ### Step 5a (salesforce): Salesforce NFRs
 
-When the work targets Salesforce, express the NFRs as platform-measurable targets:
+When the work targets Salesforce, write each NFR as a target the platform can
+measure. Take every limit value from **`platform-docs-get`** (governor limits),
+never from memory.
 
-- **Governor limit budget** (in `performance-requirements.md`, section
-  `## Governor Limit Budget`): per critical synchronous transaction at 200
-  records, the target ceilings as a share of the platform limits (100 SOQL
-  queries, 50,000 rows retrieved, 150 DML statements, 10,000 DML rows,
-  10,000 ms CPU, 6 MB heap, 100 callouts). A typical target is below 50% so that
-  other automation on the same object still fits.
-- **Scalability** (in `scalability-requirements.md`): data volumes and growth
-  per object, query selectivity requirements, async volume (Batch and Queueable
-  job counts per day against the org's async Apex limit), and API call budget
-  per 24 hours.
-- **Security** (in `security-requirements.md`): sharing and CRUD/FLS
-  enforcement requirements, sensitive field handling, Code Analyzer severity
-  gates (no Critical or High security violations), and secrets only in Named
-  Credentials.
-- **Testability**: the Apex coverage floor per class and org-wide (at least the
-  75% platform floor; the default target is 85% org-wide and 75% per class),
-  Jest coverage for LWCs, and bulk tests required for every trigger path.
+- **Governor limit budget** (in `performance-requirements.md`, a
+  `## Governor Limit Budget` section). For each critical synchronous transaction
+  at 200 records, set a ceiling as a share of each platform limit: SOQL queries,
+  rows, DML statements, DML rows, CPU, heap, and callouts.
+- **Scalability** (in `scalability-requirements.md`):
+  - volumes and growth per object;
+  - query selectivity, checked with **`platform-soql-query`**;
+  - the async job budget;
+  - the 24-hour API call budget.
+- **Security** (in `security-requirements.md`):
+  - sharing and CRUD/FLS enforcement;
+  - sensitive field handling;
+  - zero Code Analyzer findings at severity 1–2 (**`dx-code-analyzer-run`**);
+  - secrets only in Named Credentials.
+- **Testability**:
+  - Apex coverage: at least the 75% platform floor, with a default target of
+    85% org-wide and 75% per class;
+  - bulk tests for every trigger path;
+  - LWC Jest tests.
 - **Tech stack decisions** (in `tech-stack-decisions.md`): `sourceApiVersion`,
-  the trigger framework, the logging framework, the LWC testing tooling, and
-  Code Analyzer.
+  the trigger framework, logging, and the Salesforce skills and MCP toolsets
+  this project requires.

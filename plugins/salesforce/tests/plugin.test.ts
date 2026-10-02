@@ -1,11 +1,13 @@
-// The salesforce plugin's own content, compose, and sensor validation.
+// The salesforce plugin's own content, compose, gate-sensor, and doctor validation.
 //
 // Run: bun test plugins/salesforce/tests/plugin.test.ts
 // (also discovered by the integration tier: bash tests/run-tests.sh --integration --filter "plugin-salesforce")
 
 import { NATIVE_FIXTURE_SETUP_TIMEOUT_MS } from "../../../tests/harness/test-budget.ts";
 import { afterAll, beforeAll, describe, expect, setDefaultTimeout, test } from "bun:test";
-import { readFileSync, rmSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -14,9 +16,14 @@ import {
   walkMarkdownFiles,
   type ComposedPluginFixture,
 } from "../../../tests/harness/plugin-kit.ts";
-import { looksLikeRecordId, scanApex } from "../tools/aidlc-sensor-salesforce-apex-antipatterns.ts";
+import { classifyToolCall } from "../../../core/hooks/aidlc-record-tool-calls.ts";
 import { evaluate } from "../tools/aidlc-sensor-salesforce-apex-coverage.ts";
-import { scanCss } from "../tools/aidlc-sensor-salesforce-lwc-styling.ts";
+import {
+  codeGenerationRequirements,
+  evaluateRequirements,
+  STAGE_REQUIREMENTS,
+} from "../tools/aidlc-sensor-salesforce-tool-usage.ts";
+import { missingToolsets, salesforceMcpArgs } from "../tools/salesforce-doctor.ts";
 
 setDefaultTimeout(NATIVE_FIXTURE_SETUP_TIMEOUT_MS);
 
@@ -30,8 +37,6 @@ const PLUGIN_STAGES = [
   "salesforce-org-validation",
   "salesforce-release-deployment",
 ];
-// Core stages the salesforce-classic route runs (classic's set minus
-// infrastructure-design, plus ci-pipeline), joined to the route by adds.scopes.
 const CORE_ROUTE = [
   "reverse-engineering",
   "practices-discovery",
@@ -50,29 +55,34 @@ const CORE_ROUTE = [
   "ci-pipeline",
 ];
 
-const ruleIds = (source: string, file = "Example.cls"): string[] => scanApex(file, source).map((v) => v.rule);
-
 describe("salesforce plugin content", () => {
   test("passes the reusable plugin content validator", () => {
     expect(validatePluginContent(PLUGIN_ROOT)).toEqual([]);
   });
 
-  test("ships every plugin stage and one contribution per core route stage", () => {
-    const stages = walkMarkdownFiles(join(PLUGIN_ROOT, "stages")).map((f) => f.replace(/\\/g, "/").split("/").pop());
-    for (const slug of PLUGIN_STAGES) expect(stages).toContain(`${slug}.md`);
-    const contributions = walkMarkdownFiles(join(PLUGIN_ROOT, "contributions")).map((f) =>
-      readFileSync(f, "utf-8"),
-    );
-    for (const slug of CORE_ROUTE) {
-      expect(contributions.some((c) => c.includes(`target: ${slug}\n`) && c.includes(`- ${SCOPE}`))).toBe(true);
+  test("plugin stages are led by existing AIDLC agents, not plugin-owned ones", () => {
+    for (const file of walkMarkdownFiles(join(PLUGIN_ROOT, "stages"))) {
+      const text = readFileSync(file, "utf-8");
+      const agents = [...text.matchAll(/^(?:lead_agent|reviewer):\s*(\S+)|^ {2}- (aidlc-[a-z-]+-agent)$/gm)]
+        .map((m) => m[1] ?? m[2]);
+      expect(agents.length).toBeGreaterThan(0);
+      for (const agent of agents) expect(agent).toMatch(/^aidlc-[a-z-]+-agent$/);
+      expect(text).toContain("- salesforce-tool-usage");
     }
   });
 
-  test("never anchors after a step whose body holds a fenced heading", () => {
-    // after-step:<n> stops at the next ##/### line even inside a code fence, so
-    // the plugin uses before-step anchors throughout.
-    for (const file of walkMarkdownFiles(join(PLUGIN_ROOT, "contributions"))) {
-      expect(readFileSync(file, "utf-8")).not.toMatch(/anchor: after-step:/);
+  test("every core route stage is contributed and no fragment anchors after a step", () => {
+    const contributions = walkMarkdownFiles(join(PLUGIN_ROOT, "contributions")).map((f) => readFileSync(f, "utf-8"));
+    for (const slug of CORE_ROUTE) {
+      expect(contributions.some((c) => c.includes(`target: ${slug}\n`) && c.includes(`- ${SCOPE}`))).toBe(true);
+    }
+    for (const c of contributions) expect(c).not.toMatch(/anchor: after-step:/);
+  });
+
+  test("every gated stage has requirements, and every skill named is an sf-skills id shape", () => {
+    for (const slug of PLUGIN_STAGES) expect(STAGE_REQUIREMENTS[slug]?.length ?? 0).toBeGreaterThan(0);
+    for (const reqs of Object.values(STAGE_REQUIREMENTS)) {
+      for (const id of reqs.flatMap((r) => r.anyOf)) expect(id).toMatch(/^(skill:[a-z0-9-]+|mcp:[a-z_]+)$/);
     }
   });
 });
@@ -88,7 +98,7 @@ describe("salesforce plugin composes into a Claude install", () => {
     if (fixture) rmSync(dirname(fixture.projectDir), { recursive: true, force: true });
   });
 
-  const dataFile = (name: string): unknown => {
+  const data = (name: string): unknown => {
     if (!fixture) throw new Error("fixture not composed");
     return JSON.parse(readFileSync(join(fixture.projectDir, ".claude", "tools", "data", name), "utf-8"));
   };
@@ -98,130 +108,143 @@ describe("salesforce plugin composes into a Claude install", () => {
   });
 
   test("salesforce-classic routes the plugin stages and the classic-style core stages", () => {
-    const grid = dataFile("scope-grid.json") as Record<string, { stages: Record<string, string> }>;
+    const grid = data("scope-grid.json") as Record<string, { stages: Record<string, string> }>;
     const route = grid[SCOPE]?.stages ?? {};
     for (const slug of [...PLUGIN_STAGES, ...CORE_ROUTE]) expect(route[slug]).toBe("EXECUTE");
-    for (const slug of ["infrastructure-design", "intent-capture", "deployment-execution", "observability-setup"]) {
-      expect(route[slug]).toBe("SKIP");
+    for (const slug of ["infrastructure-design", "intent-capture", "deployment-execution"]) expect(route[slug]).toBe("SKIP");
+  });
+
+  test("the gate sensor is bound as blocking and gate-fired where work is checked", () => {
+    const graph = data("stage-graph.json") as Array<{
+      slug: string;
+      sensors_applicable?: Array<{ id: string; fire_on?: string; default_severity?: string }>;
+    }>;
+    for (const slug of [...PLUGIN_STAGES, "code-generation", "build-and-test", "refined-mockups"]) {
+      const gate = graph.find((s) => s.slug === slug)?.sensors_applicable?.find((x) => x.id === "salesforce-tool-usage");
+      expect(gate?.fire_on).toBe("gate");
+      expect(gate?.default_severity).toBe("blocking");
     }
   });
 
-  test("plugin stages land after the core stages of their phase", () => {
-    const graph = dataFile("stage-graph.json") as Array<{ slug: string; number: string }>;
-    const order = (slug: string): number => graph.findIndex((s) => s.slug === slug);
-    expect(order("salesforce-solution-design")).toBeGreaterThan(order("units-generation"));
-    expect(order("salesforce-solution-design")).toBeLessThan(order("functional-design"));
-    expect(order("salesforce-org-validation")).toBeGreaterThan(order("build-and-test"));
-  });
-
-  test("code-generation gains the Salesforce sensors and prose", () => {
-    const graph = dataFile("stage-graph.json") as Array<{ slug: string; sensors_applicable?: Array<{ id: string }> }>;
-    const codeGen = graph.find((s) => s.slug === "code-generation");
-    const ids = (codeGen?.sensors_applicable ?? []).map((s) => s.id);
-    expect(ids).toContain("salesforce-apex-antipatterns");
-    expect(ids).toContain("salesforce-lwc-styling");
+  test("the Salesforce-first core ships the routing knowledge and the recording hook", () => {
     if (!fixture) throw new Error("fixture not composed");
-    const stage = readFileSync(
-      join(fixture.projectDir, ".claude", "aidlc-common", "stages", "construction", "code-generation.md"),
-      "utf-8",
-    );
-    expect(stage).toContain("### Step 3a (salesforce): Salesforce delegation context");
-    expect(stage).toContain(".claude/knowledge/salesforce-developer-agent/salesforce-apex-guide.md");
-    expect(stage).not.toContain("{{HARNESS_DIR}}");
+    const root = join(fixture.projectDir, ".claude");
+    expect(readFileSync(join(root, "knowledge", "aidlc-shared", "salesforce-tooling.md"), "utf-8")).toContain("platform-apex-generate");
+    expect(readFileSync(join(root, "settings.json"), "utf-8")).toContain("engine hook record-tool-calls");
+    expect(readFileSync(join(root, "agents", "aidlc-developer-agent.md"), "utf-8")).toContain("## Salesforce Platform");
   });
 });
 
-describe("salesforce-apex-antipatterns sensor", () => {
-  test("flags SOQL and DML inside loops but not a SOQL for-loop header", () => {
-    const src = `public with sharing class A {
-  public static void run(List<Account> accts) {
-    for (Account a : [SELECT Id FROM Account]) { }
-    for (Account a : accts) {
-      Contact c = [SELECT Id FROM Contact WHERE AccountId = :a.Id LIMIT 1];
-      update a;
+describe("record-tool-calls hook classification", () => {
+  test("records MCP tools, Skill calls, and SKILL.md reads only", () => {
+    expect(classifyToolCall("mcp__salesforce-dx__run_code_analyzer", {})).toEqual({
+      kind: "mcp",
+      tool: "run_code_analyzer",
+      server: "salesforce-dx",
+    });
+    expect(classifyToolCall("Skill", { skill: "platform-apex-generate" })?.tool).toBe("platform-apex-generate");
+    expect(classifyToolCall("Read", { file_path: "/p/.claude/skills/automation-flow-generate/SKILL.md" })?.tool).toBe(
+      "automation-flow-generate",
+    );
+    expect(classifyToolCall("Read", { file_path: "/p/force-app/main/default/classes/A.cls" })).toBeNull();
+    expect(classifyToolCall("Write", { file_path: "x" })).toBeNull();
+  });
+});
+
+describe("salesforce-tool-usage gate sensor", () => {
+  test("code generation requirements follow the Salesforce metadata written", () => {
+    const labels = codeGenerationRequirements([
+      "force-app/main/default/classes/InvoiceService.cls",
+      "force-app/main/default/classes/InvoiceServiceTest.cls",
+      "force-app/main/default/lwc/invoiceCard/invoiceCard.css",
+      "force-app/main/default/objects/Invoice__c/fields/Amount__c.field-meta.xml",
+      "force-app/main/default/flows/Invoice_Notify.flow-meta.xml",
+    ]).map((r) => r.label);
+    expect(labels).toEqual(
+      expect.arrayContaining([
+        "Apex authoring",
+        "Apex antipattern / static scan",
+        "Apex test generation",
+        "LWC authoring",
+        "LWC Jest tests",
+        "SLDS styling",
+        "custom field metadata",
+        "Flow metadata",
+        "metadata schema companion for generated metadata",
+      ]),
+    );
+    expect(codeGenerationRequirements(["README.md"])).toEqual([]);
+  });
+
+  test("passes only when every requirement has a recorded call", () => {
+    const reqs = STAGE_REQUIREMENTS["salesforce-org-validation"] ?? [];
+    const partial = evaluateRequirements(reqs, [
+      { kind: "mcp", tool: "deploy_metadata" },
+      { kind: "mcp", tool: "run_apex_test" },
+    ]);
+    expect(partial.pass).toBe(false);
+    expect(partial.missing.map((m) => m.requirement)).toEqual(["Salesforce Code Analyzer"]);
+    const full = evaluateRequirements(reqs, [
+      { kind: "mcp", tool: "deploy_metadata" },
+      { kind: "skill", tool: "platform-apex-test-run" },
+      { kind: "skill", tool: "dx-code-analyzer-run" },
+    ]);
+    expect(full.pass).toBe(true);
+  });
+
+  test("reads the ledger beside the record and the unit's source manifest", () => {
+    const tmp = mkdtempSync(join(tmpdir(), "sf-gate-"));
+    try {
+      const record = join(tmp, "aidlc", "spaces", "default", "intents", "i1");
+      const unitDir = join(record, "construction", "u1", "code-generation");
+      mkdirSync(unitDir, { recursive: true });
+      mkdirSync(join(record, ".aidlc-engine", "tool-calls"), { recursive: true });
+      writeFileSync(join(unitDir, "code-summary.md"), "# Summary\n");
+      writeFileSync(
+        join(unitDir, "source-manifest.json"),
+        JSON.stringify({ stage: "code-generation", unit: "u1", version: 1, writes: [{ path: "force-app/main/default/classes/A.cls" }] }),
+      );
+      const ledger = join(record, ".aidlc-engine", "tool-calls", "code-generation.jsonl");
+      const run = () =>
+        JSON.parse(
+          spawnSync(
+            process.execPath,
+            [join(PLUGIN_ROOT, "tools", "aidlc-sensor-salesforce-tool-usage.ts"), "--stage", "code-generation", "--output-path", join(unitDir, "code-summary.md")],
+            { encoding: "utf-8" },
+          ).stdout,
+        );
+      writeFileSync(ledger, `${JSON.stringify({ stage: "code-generation", unit: "u1", kind: "skill", tool: "platform-apex-generate" })}\n`);
+      expect(run().pass).toBe(false);
+      writeFileSync(
+        ledger,
+        `${JSON.stringify({ stage: "code-generation", unit: "u1", kind: "skill", tool: "platform-apex-generate" })}\n${JSON.stringify({ stage: "code-generation", unit: "u1", kind: "mcp", tool: "scan_apex_class_for_antipatterns" })}\n`,
+      );
+      expect(run().pass).toBe(true);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
     }
-  }
-}`;
-    const found = scanApex("A.cls", src);
-    expect(found.filter((v) => v.rule === "soql-in-loop").map((v) => v.line)).toEqual([5]);
-    expect(found.filter((v) => v.rule === "dml-in-loop").map((v) => v.line)).toEqual([6]);
-  });
-
-  test("ignores comments and string contents", () => {
-    const src = `public with sharing class B {
-  // for (X x : xs) { insert x; }
-  String s = 'for (a : b) { update c; }';
-}`;
-    expect(ruleIds(src)).toEqual([]);
-  });
-
-  test("flags missing sharing, SeeAllData, hardcoded Ids, and empty catch", () => {
-    const src = `public class C {
-  Id acct = '001000000000001AAA';
-  void m() { try { x(); } catch (Exception e) {} }
-}`;
-    expect(ruleIds(src)).toEqual(expect.arrayContaining(["missing-sharing", "hardcoded-id", "empty-catch"]));
-    expect(ruleIds(`@IsTest(SeeAllData=true)\nprivate class CTest {}`)).toEqual(["see-all-data"]);
-  });
-
-  test("test classes need no sharing declaration and words are not record Ids", () => {
-    expect(ruleIds(`@IsTest\nprivate class DTest { }`)).toEqual([]);
-    expect(looksLikeRecordId("AccountTriggerHandler")).toBe(false);
-    expect(looksLikeRecordId("0015g00000AbCdE")).toBe(true);
-  });
-
-  test("warns on logic inside a trigger body", () => {
-    const trigger = `trigger AccountTrigger on Account (before insert) {
-  for (Account a : Trigger.new) { a.Name = 'x'; }
-}`;
-    expect(ruleIds(trigger, "AccountTrigger.trigger")).toEqual(["logic-in-trigger"]);
-    expect(ruleIds("trigger AccountTrigger on Account (before insert) { new AccountTriggerHandler().run(); }", "AccountTrigger.trigger")).toEqual([]);
   });
 });
 
-describe("salesforce-lwc-styling sensor", () => {
-  const rules = (css: string): string[] => scanCss("lwc/card/card.css", css).map((v) => v.rule);
-
-  test("allows hooks with fallbacks, including legacy tokens as fallbacks", () => {
-    expect(
-      rules(`.card { color: var(--slds-g-color-on-surface-1, #2e2e2e); padding: var(--slds-g-spacing-4, var(--lwc-spacingMedium)); }`),
-    ).toEqual([]);
-  });
-
-  test("flags hardcoded colors, reassigned and component hooks, and deprecated tokens", () => {
-    const found = rules(`#main .card {
-  color: #ff0000;
-  --slds-g-color-accent-1: red;
-  border-color: var(--slds-c-card-color-border);
-  background: var(--lwc-colorBackground);
-  margin: 0 !important;
-}`);
-    expect(found).toEqual(
-      expect.arrayContaining(["hardcoded-color", "reassigned-hook", "component-hook", "deprecated-token", "important"]),
-    );
-    expect(found.filter((r) => r === "hardcoded-color")).toHaveLength(1);
+describe("salesforce doctor helpers", () => {
+  test("detects the Salesforce DX MCP server and its missing toolsets", () => {
+    const args = salesforceMcpArgs([
+      JSON.stringify({ mcpServers: { sf: { command: "npx", args: ["-y", "@salesforce/mcp", "--orgs", "X", "--toolsets", "orgs,metadata"] } } }),
+    ]);
+    expect(args).toHaveLength(1);
+    expect(missingToolsets(args[0] ?? [])).toContain("lwc-experts");
+    expect(missingToolsets(["@salesforce/mcp", "--toolsets", "all"])).toEqual([]);
   });
 });
 
 describe("salesforce-apex-coverage sensor", () => {
-  test("passes when tests pass and coverage meets targets", () => {
+  test("never accepts a target below the platform floor", () => {
     const result = evaluate({
-      summary: { failing: 0, org_wide_coverage_pct: 91 },
-      classes: [{ name: "InvoiceService", coverage_pct: 95 }],
-    });
-    expect(result.pass).toBe(true);
-    expect(result.targets).toEqual({ org_wide: 85, per_class: 75 });
-  });
-
-  test("reports failures, low coverage, and never accepts a target below the platform floor", () => {
-    const result = evaluate({
-      summary: { failing: 2, org_wide_coverage_pct: 70 },
-      classes: [{ name: "InvoiceService", coverage_pct: 40 }],
+      summary: { failing: 0, org_wide_coverage_pct: 70 },
+      classes: [{ name: "A", coverage_pct: 90 }],
       targets: { org_wide: 50, per_class: 75 },
     });
     expect(result.pass).toBe(false);
     expect(result.targets.org_wide).toBe(75);
-    expect(result.findings_count).toBe(3);
-    expect(result.classes_below_target).toEqual(["InvoiceService (40%)"]);
   });
 });

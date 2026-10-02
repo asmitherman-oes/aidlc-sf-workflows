@@ -6,10 +6,10 @@ plugin: salesforce
 phase: inception
 execution: CONDITIONAL
 condition: Execute when a target Salesforce org (sandbox, scratch, or a read-only production login) is authorized for this workflow, or when the workspace is an existing Salesforce DX project whose target org must be checked for conflicts. Skip for a greenfield project with no org yet.
-lead_agent: salesforce-architect-agent
+lead_agent: aidlc-architect-agent
 support_agents:
-  - salesforce-admin-agent
-  - salesforce-devops-agent
+  - aidlc-developer-agent
+  - aidlc-pipeline-deploy-agent
 mode: inline
 produces:
   - salesforce-org-profile
@@ -34,6 +34,7 @@ requires_stage:
 sensors:
   - required-sections
   - upstream-coverage
+  - salesforce-tool-usage
 scopes:
   - salesforce-classic
 inputs: requirements.md (including its Salesforce Platform Constraints section), stories.md and components.md when produced, Reverse Engineering artifacts when brownfield, and the live target org through the Salesforce DX MCP server
@@ -45,75 +46,58 @@ outputs: salesforce-org-profile.md and salesforce-org-impact-analysis.md under t
 MANDATORY: Follow stage-protocol.md for approval gates, question format, and completion messages.
 
 Ground the Salesforce design in the real target org before anyone designs
-against it. This stage is **read-only against the org**: it queries and, with
-consent, retrieves. It never deploys, assigns permissions, or changes data.
-
-Tool reference for every Salesforce DX MCP call below, including `sf` CLI
-fallbacks when the MCP server is not connected:
-`{{HARNESS_DIR}}/knowledge/salesforce-devops-agent/salesforce-dx-mcp-tools.md`.
+against it. This stage is **read-only against the org**. The work goes through
+Salesforce's own tooling (see `{{HARNESS_DIR}}/knowledge/aidlc-shared/salesforce-tooling.md`).
+The `salesforce-tool-usage` gate checks the recorded calls before approval.
 
 ## Steps
 
 ### Step 1: Resolve the Target Org
 
-- Call the Salesforce DX MCP tool `list_all_orgs` to see the authorized orgs.
-  If the MCP server is unavailable, run `sf org list --json`.
-- Ask the human which org alias to analyse, with options built from the list
-  plus "No org yet: skip this stage". Never guess.
-- Confirm the choice with `get_username` and echo the alias, username, and
-  whether the org is a scratch org, sandbox, or production. Production is
-  allowed here only because this stage is read-only.
+- Call the Salesforce DX MCP tool `list_all_orgs`. Ask the human which org alias
+  to analyse, offering the listed aliases plus "No org yet: skip this stage".
+  Never guess.
+- Confirm the choice with the MCP tool `get_username`, and echo the alias,
+  username, and whether the org is scratch, sandbox, or production.
+  Production is allowed only because this stage is read-only.
 - If the human chooses to skip, report the stage as skipped through the
   completion handoff and stop.
 
-### Step 2: Profile the Org
+### Step 2: Inventory the Org with Salesforce Tooling
 
-Use `run_soql_query` against the confirmed org and record each query with its
-result summary:
-
-- `SELECT Name, OrganizationType, IsSandbox, InstanceName, NamespacePrefix, LanguageLocaleKey, TimeZoneSidKey FROM Organization`
-- `SELECT Name, TotalLicenses, UsedLicenses, Status FROM UserLicense WHERE Status = 'Active'`
-- Installed packages (Tooling API): `SELECT SubscriberPackage.Name, SubscriberPackage.NamespacePrefix, SubscriberPackageVersion.Name FROM InstalledSubscriberPackage`
-- The org's API version from `get_username`/org display, compared with the
-  workspace `sfdx-project.json` `sourceApiVersion` when present.
-- Limits: `sf org list limits --target-org <alias> --json` (the MCP server has no
-  limits tool). Record API requests, data storage, file storage, and async Apex
-  executions.
+Invoke the **`dx-org-analyze`** skill in single-org mode against the confirmed
+alias and follow it. It produces the inventory of metadata components,
+permissions, profiles, installed packages, and licenses. Supplement it with the
+MCP tool `run_soql_query` (use the **`platform-soql-query`** skill to author
+non-trivial queries) for anything the inventory does not cover: org identity,
+API version, and active licenses.
 
 ### Step 3: Analyse Impact on Existing Metadata
 
 From `requirements.md` (its `## Salesforce Platform Constraints` section),
 `stories.md`, and `components.md`, list every object, feature, and integration
-the change touches. For each touched object, query (Tooling API where noted):
+the change touches. For each touched object, use `run_soql_query` (Tooling API
+where needed) to read its fields, triggers, record-triggered flows, validation
+rules, and record volume. Use **`platform-data-and-tooling-api-context-get`**
+for standard-object field facts instead of recalling them. Flag large data
+volumes, data skew, and naming or automation conflicts.
 
-- Fields: `SELECT QualifiedApiName, DataType, IsIndexed FROM FieldDefinition WHERE EntityDefinition.QualifiedApiName = '<Object>'`
-- Triggers: `SELECT Name, TableEnumOrId, Status FROM ApexTrigger WHERE TableEnumOrId = '<Object>'` (Tooling)
-- Record-triggered flows: `SELECT ApiName, ProcessType, TriggerType, TriggerObjectOrEventLabel, IsActive FROM FlowDefinitionView WHERE TriggerObjectOrEventLabel != null`
-- Validation rules: `SELECT ValidationName, Active, EntityDefinition.QualifiedApiName FROM ValidationRule WHERE EntityDefinition.QualifiedApiName = '<Object>'` (Tooling)
-- Volumes: `SELECT COUNT() FROM <Object>`. Flag large data volume (over about one
-  million rows) and ownership or lookup skew (over 10,000 children per parent
-  or owner).
-
-With the human's consent, use `retrieve_metadata` to pull specific components
-whose source the design must read. Retrieval writes into the workspace, so state
-which components and directory first.
+With the human's consent, retrieve specific components whose source the design
+must read. Use the **`platform-metadata-retrieve`** skill or the MCP tool
+`retrieve_metadata`, and first state which components and which directory.
 
 ### Step 4: Generate Artifacts
 
-Write `salesforce-org-profile.md` with these H2 sections:
-`## Org Identity`, `## Licenses and Clouds`, `## Installed Packages`,
-`## Limits Snapshot`, `## API Version`, and `## Evidence` (the queries run, each
-with its result summary).
+Write `salesforce-org-profile.md` with these sections: `## Org Identity`,
+`## Licenses and Clouds`, `## Installed Packages`, `## Limits Snapshot`,
+`## API Version`, and `## Evidence`. The Evidence section lists the skill runs
+and queries used, each with a result summary.
 
-Write `salesforce-org-impact-analysis.md` with these H2 sections:
-`## Touched Objects` (a table of object, standard or custom, field count, and
-record volume), `## Existing Automation` (a table of object, triggers, flows,
-validation rules, and process or workflow leftovers), `## Conflicts and Risks`
-(each conflict tied to a requirement id, such as an existing field name clash,
-competing automation, LDV, skew, or a license gap), and `## Recommendations for
-Solution Design`.
+Write `salesforce-org-impact-analysis.md` with these sections:
+`## Touched Objects`, `## Existing Automation`, `## Conflicts and Risks`, and
+`## Recommendations for Solution Design`. Tie each conflict to a requirement id.
 
-Every claim about the org must cite its query or retrieve evidence.
+Every claim about the org must cite its tool evidence.
 
 ### Step 5: Completion Handoff
 
@@ -124,16 +108,16 @@ That `report` call owns every lifecycle transition and advancement; never perfor
 ### Step 6: Present Completion & Request Approval
 
 Completion emoji: :cloud:
-- Summary: org identity, license or package gaps, and the top conflicts found
+- Summary: the org's identity, any license or package gaps, and the top conflicts
 - Review path: this stage's engine-resolved record dir
 - Standard 2-option approval (Approve / Request Changes). STOP for the human response.
 
 ## Sensors
 
-This stage's outputs are markdown artifacts under its record dir. The imported
-`required-sections` and `upstream-coverage` sensors check those outputs.
-
-Upstream targets: `requirements`, `stories`, `components`, `unit-of-work`.
+`required-sections` and `upstream-coverage` check the markdown outputs.
+`salesforce-tool-usage` (blocking, at the gate) requires that the recorded
+calls include `list_all_orgs`, `get_username`, or `dx-org-analyze`, plus
+`run_soql_query`, `dx-org-analyze`, or `platform-soql-query`.
 
 ## Learn
 

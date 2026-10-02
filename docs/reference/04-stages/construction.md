@@ -314,7 +314,7 @@ legacy name and require the selected intent's exact `WORKTREE_DISCARDED`
 |-------|-----------------------|-------------|----------------------------------------------------------------------------------------------------|---------------------|-------------------|-----------------------------|----------|
 | 3.1   | Functional Design     | CONDITIONAL | New data models, complex business logic, or business rules need design                             | aidlc-architect-agent     | aidlc-developer-agent   | inline                      | Yes      |
 | 3.2   | NFR Requirements      | CONDITIONAL | Performance, security, scalability, reliability, or observability requirements needed, or tech stack selection needed | aidlc-architect-agent     | aidlc-devsecops-agent, aidlc-compliance-agent, aidlc-quality-agent   | inline                      | Yes      |
-| 3.3   | NFR Design            | CONDITIONAL | NFR Requirements was executed and NFR patterns need design                                          | aidlc-architect-agent     | aidlc-aws-platform-agent| inline                      | Yes      |
+| 3.3   | NFR Design            | CONDITIONAL | NFR Requirements was executed and NFR patterns need design                                          | aidlc-architect-agent     | aidlc-developer-agent| inline                      | Yes      |
 | 3.4   | Infrastructure Design | CONDITIONAL | Infrastructure services need mapping, deployment architecture required, or cloud resources needed   | aidlc-aws-platform-agent  | aidlc-devsecops-agent, aidlc-compliance-agent   | inline                      | Yes      |
 | 3.5   | Code Generation       | ALWAYS      | Always executes for every unit in the execution plan                                               | aidlc-developer-agent     | (none)            | subagent (aidlc-developer-agent)  | Yes      |
 | 3.6   | Build and Test        | ALWAYS      | Always executes once after all per-unit stages are finished                                         | aidlc-quality-agent       | aidlc-devsecops-agent   | inline                      | No       |
@@ -545,7 +545,7 @@ a dedicated tech-stack-decisions.md for technology selection rationale.
 | Condition         | NFR Requirements was executed and NFR patterns need design. Skip if NFR Requirements was skipped. |
 | Per-Unit          | Yes                                                                                               |
 | Lead Agent        | aidlc-architect-agent                                                                                   |
-| support_agents    | aidlc-aws-platform-agent                                                                                |
+| support_agents    | aidlc-developer-agent                                                                                   |
 | mode              | inline                                                                                            |
 | Inputs            | NFR requirements artifacts, functional design artifacts                                           |
 | Outputs           | `<record>/construction/{unit-name}/nfr-design/` -- performance-design.md, security-design.md, scalability-design.md, reliability-design.md, observability-design.md, logical-components.md |

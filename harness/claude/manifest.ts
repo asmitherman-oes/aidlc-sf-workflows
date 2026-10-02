@@ -63,6 +63,10 @@ const manifest: HarnessManifest = {
           "aws-serverless": [
             "sha256:858610c8f5ccbbecc39595fdf866f68d0fb32d62750b3d50ee4bdef7ec1d104b",
           ],
+          // Salesforce-first default (this fork): the Salesforce DX MCP server.
+          "salesforce-dx": [
+            "sha256:3da4410b1034d5bdaefe4d956a0dbb6163c6396f1cf159ef7cbc3d961486a38b",
+          ],
         },
       },
     },

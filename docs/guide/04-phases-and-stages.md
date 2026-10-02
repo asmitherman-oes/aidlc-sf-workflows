@@ -154,7 +154,7 @@ flowchart TD
 |---|-------|------|-----------|---------------|-----------|
 | 1.1 | Intent Capture & Framing | aidlc-product-agent | aidlc-architect-agent | Intent statement, stakeholder map | ALWAYS |
 | 1.2 | Market Research | aidlc-product-agent | — | Competitive analysis, build-vs-buy | CONDITIONAL |
-| 1.3 | Feasibility & Constraints | aidlc-architect-agent | aidlc-aws-platform-agent, aidlc-compliance-agent | Feasibility assessment, constraint register, RAID log | CONDITIONAL |
+| 1.3 | Feasibility & Constraints | aidlc-architect-agent | aidlc-compliance-agent | Feasibility assessment, constraint register, RAID log | CONDITIONAL |
 | 1.4 | Scope Definition | aidlc-product-agent | aidlc-delivery-agent | Scope definition, intent backlog | ALWAYS |
 | 1.5 | Team Formation | aidlc-delivery-agent | — | Team assessment, mob composition plan | CONDITIONAL |
 | 1.6 | Rough Mockups | aidlc-design-agent | aidlc-product-agent | Wireframes, user flows, concept deck | CONDITIONAL |
@@ -236,9 +236,9 @@ flowchart TD
 | 2.3 | Requirements Analysis | aidlc-product-agent | — | `requirements.md` | ALWAYS |
 | 2.4 | User Stories | aidlc-product-agent | aidlc-design-agent, aidlc-developer-agent, aidlc-quality-agent | `stories.md`, `personas.md` | User-facing features |
 | 2.5 | Refined Mockups | aidlc-design-agent | aidlc-product-agent | Hi-fi mockups, interaction spec | UI projects |
-| 2.6 | Domain Design | aidlc-architect-agent | aidlc-aws-platform-agent, aidlc-design-agent | `components.md`, `decisions.md` (ADRs) | Per execution plan |
+| 2.6 | Domain Design | aidlc-architect-agent | aidlc-developer-agent, aidlc-design-agent | `components.md`, `decisions.md` (ADRs) | Per execution plan |
 | 2.7 | Units Generation | aidlc-architect-agent | aidlc-delivery-agent | `unit-of-work.md`, `unit-of-work-dependency.md` (DAG), `unit-of-work-story-map.md` | ALWAYS |
-| 2.8 | Contract Design | aidlc-architect-agent | aidlc-aws-platform-agent | `contract-summary.md` | CONDITIONAL |
+| 2.8 | Contract Design | aidlc-architect-agent | aidlc-developer-agent | `contract-summary.md` | CONDITIONAL |
 | 2.9 | Delivery Planning | aidlc-delivery-agent | aidlc-architect-agent | `bolt-plan.md`, `team-allocation.md`, `risk-and-sequencing-rationale.md`, `external-dependency-map.md` | ALWAYS |
 
 **Key behavior:** Stage 2.1 runs as a **pipeline** (2-link chain) — first an aidlc-developer-agent code scan, then an aidlc-architect-agent synthesis that writes the artifacts. Each return creates an ordered durable receipt, and multi-repo work requires one complete chain per repo before approval. It only executes for brownfield projects. Stage 2.2 runs as a **subagent hub-and-spoke** for greenfield and brownfield work: the lead drafts, quality/developer/devsecops inspect it independently, the human interview resolves gaps, and the lead integrates. Stage 2.4 runs as a **mob** — the lead drafts, and the design, developer, and quality agents contribute in parallel via contribution files.
@@ -388,7 +388,7 @@ Failures always stop Construction, even in autonomous mode. The Build-and-Test l
 |---|-------|------|-----------|---------------|------|
 | 3.1 | Functional Design | aidlc-architect-agent | aidlc-developer-agent | `entities.md`, `rules.md`, `functional-spec.md` | Per Unit (CONDITIONAL by execution plan) |
 | 3.2 | NFR Requirements | aidlc-architect-agent | aidlc-devsecops-agent, aidlc-compliance-agent, aidlc-quality-agent | Performance, security, scalability, reliability, observability NFRs | Per Unit (CONDITIONAL) |
-| 3.3 | NFR Design | aidlc-architect-agent | aidlc-aws-platform-agent | NFR design specifications | Per Unit (CONDITIONAL) |
+| 3.3 | NFR Design | aidlc-architect-agent | aidlc-developer-agent | NFR design specifications | Per Unit (CONDITIONAL) |
 | 3.4 | Infrastructure Design | aidlc-aws-platform-agent | aidlc-devsecops-agent, aidlc-compliance-agent | Infrastructure specifications, IaC designs | Per Unit (CONDITIONAL) |
 | 3.5 | Code Generation | aidlc-developer-agent | — | Application code + code docs | Per Unit (ALWAYS) |
 | 3.6 | Build and Test | aidlc-quality-agent | aidlc-devsecops-agent | Test results, quality report | ALWAYS, once at end |
@@ -449,7 +449,7 @@ flowchart TD
 | 4.4 | Observability Setup | aidlc-operations-agent | — | Dashboards, alarms, SLO config | CONDITIONAL |
 | 4.5 | Incident Response | aidlc-operations-agent | — | SSM runbooks, incident plan, escalation matrix | CONDITIONAL |
 | 4.6 | Performance Validation | aidlc-quality-agent | — | Load test results, NFR validation matrix | CONDITIONAL |
-| 4.7 | Feedback & Optimization | aidlc-operations-agent | aidlc-aws-platform-agent | SLO report, cost analysis, feedback loop doc | CONDITIONAL |
+| 4.7 | Feedback & Optimization | aidlc-operations-agent | aidlc-developer-agent | SLO report, cost analysis, feedback loop doc | CONDITIONAL |
 
 **Key behaviors:**
 - All 7 stages are **conditional** — the entire phase may be skipped for `mvp` and `poc` scopes

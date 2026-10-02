@@ -6,10 +6,10 @@ plugin: salesforce
 phase: operation
 execution: CONDITIONAL
 condition: Execute only when the human asks to promote the validated change to a named downstream org (QA, UAT, staging sandbox, or production). Skip when the workflow ends at a validated scratch org or sandbox.
-lead_agent: salesforce-devops-agent
+lead_agent: aidlc-pipeline-deploy-agent
 support_agents:
-  - salesforce-security-agent
-  - salesforce-qa-agent
+  - aidlc-devsecops-agent
+  - aidlc-quality-agent
 mode: inline
 produces:
   - salesforce-release-plan
@@ -29,6 +29,7 @@ requires_stage:
 sensors:
   - required-sections
   - upstream-coverage
+  - salesforce-tool-usage
 scopes:
   - salesforce-classic
 inputs: salesforce-org-validation-report.md, salesforce-apex-test-report.md, salesforce-environment-strategy.md, salesforce-access-matrix.md, and the Salesforce DX project source
@@ -40,76 +41,61 @@ outputs: salesforce-release-plan.md, salesforce-deployment-log.md, and salesforc
 MANDATORY: Follow stage-protocol.md for approval gates, question format, and completion messages.
 
 Promote the validated change to a downstream org with a validated, repeatable,
-reversible release. **Every write to an org in this stage needs an explicit
-human confirmation that names the target org alias.** A production deployment
-needs a second confirmation, after the human has seen a successful validation.
-
-Tool reference and CLI fallbacks:
-`{{HARNESS_DIR}}/knowledge/salesforce-devops-agent/salesforce-dx-mcp-tools.md`.
-Release methodology:
-`{{HARNESS_DIR}}/knowledge/salesforce-devops-agent/salesforce-devops-guide.md`.
+and reversible release, using the **`platform-metadata-deploy`** skill and the
+Salesforce DX MCP tools (see `{{HARNESS_DIR}}/knowledge/aidlc-shared/salesforce-tooling.md`).
+**Every write to an org in this stage needs an explicit human confirmation that
+names the target org alias.** A production deployment needs a second
+confirmation after a successful validation.
 
 ## Steps
 
 ### Step 1: Confirm the Release Target
 
 - Read `salesforce-org-validation-report.md`. If its `## Verdict` is not ready,
-  STOP and say why.
-- Call `list_all_orgs`. Ask the human for the target org alias, the release
-  window, and the approver. Confirm with `get_username` and
-  `SELECT IsSandbox, OrganizationType FROM Organization`, then echo the alias,
-  username, and production or sandbox.
+  STOP.
+- Call `list_all_orgs`. Ask the human for the target alias, the release window,
+  and the approver. Confirm the org with `get_username` and the
+  `Organization` query through `run_soql_query`, then echo the alias, username,
+  and production or sandbox.
 
 ### Step 2: Build the Release Plan
 
-Write `salesforce-release-plan.md` with these sections:
-- `## Release Scope`: a manifest (`package.xml`) generated from the change, for
-  example `sf project generate manifest --source-dir <dirs>`, or a delta from
-  git.
-- `## Destructive Changes`: `destructiveChangesPre.xml` and
-  `destructiveChangesPost.xml` contents, or none.
-- `## Test Level`: `RunLocalTests` or `RunSpecifiedTests` with the named
-  classes. Production requires tests that cover at least 75% of the deployed
-  Apex.
-- `## Pre-Deployment Steps` and `## Post-Deployment Steps`: manual setup,
-  permission set assignments, Custom Metadata or seed data, and scheduled jobs
-  to stop or restart.
-- `## Rollback Plan`: redeploy the previous version from git, use destructive
-  changes, or switch a feature toggle through a custom permission or custom
-  metadata, with an owner for each.
+Follow **`platform-metadata-deploy`** to build the release manifest and
+destructive changes. Retrieve any baseline with
+**`platform-metadata-retrieve`** / `retrieve_metadata` if needed. Write
+`salesforce-release-plan.md` with these sections:
+- `## Release Scope`;
+- `## Destructive Changes`;
+- `## Test Level`;
+- `## Pre-Deployment Steps`;
+- `## Post-Deployment Steps`;
+- `## Rollback Plan`.
 
-Present the plan and ask for approval before any org write.
+Present the plan and get approval before any org write.
 
 ### Step 3: Validate (Check-Only) Deployment
 
-- For **production**, and for any org where the human wants a validation-first
-  release, run a check-only validation:
-  `sf project deploy validate --manifest <package.xml> --test-level <level> [--tests ...] --target-org <alias> --json`.
-  Record the validation job id, test results, and coverage.
-- For a **sandbox**, the human may instead approve a direct `deploy_metadata`
-  through the MCP server with the planned test level.
+For production, and for any validate-first release, run the check-only
+validation that **`platform-metadata-deploy`** prescribes, with the planned test
+level. Record the validation job id, the test results, and coverage.
 
 ### Step 4: Deploy
 
-After the human confirms again, naming the target alias:
-- Production, or validate-first: run quick deploy of the validated job,
-  `sf project deploy quick --job-id <id> --target-org <alias> --json`.
-- Sandbox direct: call `deploy_metadata` with the release manifest.
-
-Poll long operations (`resume_tool_operation`, or `sf project deploy report`)
-and record every result in `salesforce-deployment-log.md`: `## Target Org`,
-`## Validation Run`, `## Deployment Run` (job ids, components, and test
-results), `## Destructive Changes Applied`, and `## Issues`.
+After a second confirmation that names the alias, either quick-deploy the
+validated job (production) or deploy with the MCP tool `deploy_metadata`
+(sandbox). Poll with `resume_tool_operation`, and record everything in
+`salesforce-deployment-log.md` under these sections: `## Target Org`,
+`## Validation Run`, `## Deployment Run`, `## Destructive Changes Applied`, and
+`## Issues`.
 
 ### Step 5: Post-Deployment Steps and Verification
 
-Run the approved post-deployment steps: `assign_permission_set` for the
-planned assignments, and data or metadata loads. Verify with read-only checks:
-`run_soql_query` confirms the new components exist and are active (for example
-`FlowDefinitionView` `IsActive`, or the new fields in `FieldDefinition`), and
-smoke tests run where approved. Write `salesforce-post-deployment-verification.md`
-with `## Steps Executed`, `## Smoke Checks`, `## Open Issues`, and
-`## Rollback Decision` (not needed, or executed with its result).
+Run the approved post-deployment steps. Assign permission sets with
+`assign_permission_set` or **`dx-org-permission-set-assign`**. Verify the
+deployment with read-only `run_soql_query` checks and the approved smoke tests.
+Write `salesforce-post-deployment-verification.md` with these sections:
+`## Steps Executed`, `## Smoke Checks`, `## Open Issues`, and
+`## Rollback Decision`.
 
 ### Step 6: Completion Handoff
 
@@ -120,17 +106,15 @@ That `report` call owns every lifecycle transition and advancement; never perfor
 ### Step 7: Present Completion & Request Approval
 
 Completion emoji: :rocket:
-- Summary: target org, deployment status, tests and coverage in the target, the
-  post-deployment checks, and the rollback readiness
+- Summary: the target org, deployment status, tests and coverage in the target org, the post-deployment checks, and rollback readiness
 - Review path: this stage's engine-resolved record dir
 - Standard 2-option approval (Approve / Request Changes). STOP for the human response.
 
 ## Sensors
 
-This stage's outputs are markdown artifacts under its record dir. The imported
-`required-sections` and `upstream-coverage` sensors check those outputs.
-
-Upstream targets: `salesforce-org-validation-report`, `salesforce-environment-strategy`.
+`required-sections` and `upstream-coverage` check the markdown outputs.
+`salesforce-tool-usage` (blocking, at the gate) requires a recorded
+`deploy_metadata` or `platform-metadata-deploy` call.
 
 ## Learn
 

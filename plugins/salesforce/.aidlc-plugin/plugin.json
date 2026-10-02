@@ -1,16 +1,18 @@
 {
   "name": "salesforce",
   "version": "0.1.0",
-  "description": "Salesforce application development for AI-DLC — a classic-style salesforce-classic workflow profile, Salesforce domain-expert and reviewer agents (architect, admin, developer, security, QA, DevOps, technical reviewer), Salesforce design/validation/release stages, Salesforce enrichment of core stages, Apex/LWC/coverage sensors, and Salesforce DX MCP-driven org work.",
-  "author": { "name": "Engage AIDLC" },
-  "dependencies": ["core"],
+  "description": "Salesforce application development for AI-DLC — a classic-style salesforce-classic workflow profile, Salesforce design/validation/release stages led by the existing AIDLC agents, Salesforce enrichment of core stages, and a blocking gate that requires the work to go through Salesforce skills (forcedotcom/sf-skills) and the Salesforce DX MCP server.",
+  "author": {
+    "name": "Engage AIDLC"
+  },
+  "dependencies": [
+    "core"
+  ],
   "aidlc": {
     "contributes": {
       "stages": "stages/",
       "overlays": "contributions/",
-      "agents": "agents/",
       "scopes": "scopes/",
-      "knowledge": "knowledge/",
       "sensors": "sensors/",
       "tools": "tools/"
     }

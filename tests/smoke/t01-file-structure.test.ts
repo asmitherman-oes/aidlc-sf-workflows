@@ -20,7 +20,7 @@
 // STRONGER than the .sh, which only existence-checked each path individually):
 //   .sh L12  SKILL.md exists                          -> "ships skills/aidlc/SKILL.md"
 //   .sh L15-17  3 stage-protocol files                -> "ships the 3 stage-protocol spine files" (each asserted)
-//   .sh L20-29  11 hooks (each)                        -> "ships each of the 17 framework hooks" + exact-set strengthening
+//   .sh L20-29  11 hooks (each)                        -> "ships each of the 18 framework hooks" + exact-set strengthening
 //   .sh L32-34  11 agents (loop)                       -> "ships each of the 14 agent personas" + "ships EXACTLY 14 aidlc-*-agent.md files" (count strengthening; roster grew to 13 with the two reviewer personas, then 14 with the composer)
 //   .sh L38-40  3 initialization stages (loop)         -> "ships the 3 initialization stages"
 //   .sh L43-45  7 ideation stages (loop)               -> "ships the 7 ideation stages"
@@ -90,6 +90,7 @@ const HOOKS = [
   "aidlc-statusline.ts",
   "aidlc-continue-workflow.ts",
   "aidlc-fold-usage.ts",
+  "aidlc-record-tool-calls.ts",
 ] as const;
 
 // The 32 stage files, partitioned by phase exactly as the .sh's per-phase loops
@@ -161,16 +162,16 @@ describe("t01 — shipped-tree file-structure invariant (mechanism: none)", () =
     }
   });
 
-  test("ships each of the 17 framework hooks [.sh L20-29]", () => {
+  test("ships each of the 18 framework hooks [.sh L20-29]", () => {
     for (const h of HOOKS) {
       expect(existsSync(at("hooks", h))).toBe(true);
     }
   });
 
-  // STRONGER than the .sh: not just "each of these 17 exists" but "the hooks
-  // dir contains EXACTLY 17 aidlc-*.ts hooks" — catches an 18th hook sneaking
+  // STRONGER than the .sh: not just "each of these 18 exists" but "the hooks
+  // dir contains EXACTLY 18 aidlc-*.ts hooks" — catches a 19th hook sneaking
   // in or a rename that drops one while another covers the count.
-  test("ships EXACTLY the 17 expected aidlc-*.ts hooks [.sh L20-29 — count strengthening]", () => {
+  test("ships EXACTLY the 18 expected aidlc-*.ts hooks [.sh L20-29 — count strengthening]", () => {
     const shipped = readdirSync(at("hooks"))
       .filter((f) => f.startsWith("aidlc-") && f.endsWith(".ts"))
       .sort();
@@ -276,7 +277,7 @@ describe("t01 — shipped-tree file-structure invariant (mechanism: none)", () =
   // producer to 72, then the plan-approval guard to 73. Re-drive the
   // data the loops drove and pin its length, so the migrated suite cannot
   // silently shrink the structural surface the .sh enforced.
-  test("asserts EXACTLY 78 shipped paths (prior 74 + 4 conditional protocol modules) [.sh L9]", () => {
+  test("asserts EXACTLY 79 shipped paths (prior 74 + 4 conditional protocol modules + the tool-call recording hook) [.sh L9]", () => {
     const paths: string[] = [
       at("skills", "aidlc", "SKILL.md"), // 1
       at("aidlc-common", "protocols", "stage-protocol.md"), // 2
@@ -298,8 +299,8 @@ describe("t01 — shipped-tree file-structure invariant (mechanism: none)", () =
       mem("project.md"),
       at("CLAUDE.md"),
     ];
-    expect(paths.length).toBe(78);
-    // Every one of the 78 must exist — the .sh's full TAP plan, re-proven as a
+    expect(paths.length).toBe(79);
+    // Every one of the 79 must exist — the .sh's full TAP plan, re-proven as a
     // single set so the count and the existence checks cannot drift apart.
     for (const p of paths) {
       expect(existsSync(p)).toBe(true);

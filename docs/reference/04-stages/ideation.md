@@ -48,7 +48,7 @@ CONDITIONAL stages that do not apply to the current scope.
 |-------|-----------------------------|-------------|-----------------|---------------------------------------------|--------|
 | 1.1   | Intent Capture & Framing    | ALWAYS      | aidlc-product-agent   | aidlc-architect-agent                             | inline |
 | 1.2   | Market Research             | CONDITIONAL | aidlc-product-agent   | --                                          | inline |
-| 1.3   | Feasibility & Constraints   | CONDITIONAL | aidlc-architect-agent | aidlc-aws-platform-agent, aidlc-compliance-agent        | inline |
+| 1.3   | Feasibility & Constraints   | CONDITIONAL | aidlc-architect-agent | aidlc-compliance-agent        | inline |
 | 1.4   | Scope Definition            | ALWAYS      | aidlc-product-agent   | aidlc-delivery-agent                              | inline |
 | 1.5   | Team Formation              | CONDITIONAL | aidlc-delivery-agent  | --                                          | inline |
 | 1.6   | Rough Mockups               | CONDITIONAL | aidlc-design-agent    | aidlc-product-agent                               | inline |
@@ -165,7 +165,7 @@ Validates the initiative against the external competitive landscape. Produces co
 | Stage #          | 1.3                                                                    |
 | Condition        | CONDITIONAL -- skip for trivial changes; execute for technical risk or compliance needs |
 | Lead Agent       | aidlc-architect-agent (technical feasibility)                                |
-| Support Agents   | aidlc-aws-platform-agent (AWS landscape), aidlc-compliance-agent (regulatory scanning) |
+| Support Agents   | aidlc-compliance-agent (regulatory scanning) |
 | Mode             | inline                                                                  |
 | Completion Emoji | :test_tube:                                                            |
 

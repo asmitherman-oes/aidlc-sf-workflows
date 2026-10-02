@@ -133,10 +133,12 @@ describe("t281 Kiro CLI MCP registry integrity", () => {
     }
   });
 
-  test("AWS entries equal Claude after removing disabled; context7 matches transport only", () => {
+  test("Claude ships the Salesforce-first set; context7 matches transport only", () => {
     const { servers: kiroServers } = loadRegistry(MCP_JSON);
     const { servers: claudeServers } = loadRegistry(CLAUDE_MCP_JSON);
-    expect(Object.keys(claudeServers).sort()).toEqual([...EXPECTED_SERVERS].sort());
+    // This fork is Salesforce-first on Claude: context7 + the Salesforce DX MCP
+    // server replace the AWS servers, which Kiro still ships (disabled).
+    expect(Object.keys(claudeServers).sort()).toEqual(["context7", "salesforce-dx"]);
 
     // Claude can expand its context7 API-key placeholder; Kiro CLI 2.12.1
     // passes header values verbatim, so Kiro intentionally matches only the
@@ -150,8 +152,8 @@ describe("t281 Kiro CLI MCP registry integrity", () => {
     });
 
     for (const server of Object.keys(AWS_PKG_PINS)) {
-      const { disabled: _disabled, ...enabledShape } = kiroServers[server];
-      expect(enabledShape, server).toEqual(claudeServers[server]);
+      expect(kiroServers[server], server).toBeDefined();
+      expect(claudeServers[server], server).toBeUndefined();
     }
   });
 });

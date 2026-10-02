@@ -52,6 +52,14 @@ You are a senior QA engineer and performance specialist responsible for all test
 
 *Note: The SKILL.md orchestrator handles all inter-agent delegation. This agent does not invoke other agents directly.*
 
+## Salesforce Platform
+
+This fork builds Salesforce applications. Platform knowledge comes from Salesforce's own skills (`forcedotcom/sf-skills`) and the Salesforce DX MCP server (`salesforce-dx`), not from memory. Read `{{HARNESS_DIR}}/knowledge/aidlc-shared/salesforce-tooling.md` (the task → skill/tool table and org-safety rules) before Salesforce work. Your required calls:
+
+- `platform-apex-test-run` and MCP `run_apex_test` (with coverage) to execute Apex tests; `platform-apex-test-generate` for missing tests.
+- MCP `review_lwc_jest_tests` and `experience-lwc-accessibility-jest-run` for LWC tests; MCP `run_code_analyzer` / `dx-code-analyzer-run` and `dx-apexguru-scan` for analysis.
+- Coverage: at least the 75% platform floor; the workflow default is 85% org-wide and 75% per class. Never lower a target to pass.
+
 ## Memory Focus
 
 `aidlc/spaces/<active-space>/memory/{org,team,project}.md` — active-space guardrails and affirmed practices (read per `{{HARNESS_DIR}}/knowledge/aidlc-shared/rules-reading.md`). Consult `## Testing Posture` for TDD/BDD cadence, tests-after policy, and coverage stance when designing test plans and quality gates.

@@ -213,13 +213,16 @@ sets) and want classic's one-approval-per-stage ceremony with Salesforce domain
 experts. Start it with `/salesforce-classic` or
 `/aidlc --scope salesforce-classic`.
 
-It runs classic's Inception and Construction route with Salesforce guidance
-added to each stage, without Infrastructure Design (AWS-led). It adds
-Salesforce Org Analysis, Solution Design, Data Model Design, and Security Model
-Design at the end of Inception, Salesforce Org Validation (scratch org or
-sandbox deploy, Apex tests with coverage, Code Analyzer) at the end of
-Construction, and a conditional Salesforce Release Deployment. Org work goes
-through the Salesforce DX MCP server. See
+It runs classic's Inception and Construction route, without Infrastructure
+Design, which is led by the AWS platform agent. It keeps the existing AIDLC agents, which do
+the Salesforce work through Salesforce's official agent skills
+(`forcedotcom/sf-skills`) and the Salesforce DX MCP server. At the end of
+Inception it adds four stages: Salesforce Org Analysis, Solution Design, Data
+Model Design, and Security Model Design. At the end of Construction it adds
+Salesforce Org Validation, which deploys to a scratch org or sandbox, runs Apex
+tests with coverage, and runs Code Analyzer. It also adds a conditional
+Salesforce Release Deployment. A blocking `salesforce-tool-usage` gate checks
+the recorded skill and MCP calls before each gated stage is approved. See
 [`plugins/salesforce/README.md`](../../plugins/salesforce/README.md).
 
 ## Construction approvals and execution

@@ -676,8 +676,9 @@ describe("t294 provider diagnostics", () => {
       expect(settings.env.AWS_REGION).toBe("eu-west-1");
       expect(settings.env.AWS_PROFILE).toBe("dev");
       const claudeMcp = readFileSync(join(claude, ".mcp.json"), "utf-8");
-      expect(claudeMcp).toContain("https://aws-mcp.eu-west-1.api.aws/mcp");
-      expect(claudeMcp).toContain("AWS_REGION=eu-west-1");
+      // Salesforce-first Claude projection: no aws-mcp server, so no region rewrite.
+      expect(claudeMcp).toContain("@salesforce/mcp");
+      expect(claudeMcp).not.toContain("aws-mcp");
     });
 
     test("Codex leaves its project configuration unchanged", () => {
@@ -1735,7 +1736,7 @@ describe("t294 config diagnostics CLI", () => {
     expect(readFileSync(join(project, ".claude", "settings.json"), "utf-8"))
       .toContain('"AWS_REGION": "eu-west-1"');
     expect(readFileSync(join(project, ".mcp.json"), "utf-8"))
-      .toContain("https://aws-mcp.eu-west-1.api.aws/mcp");
+      .toContain("@salesforce/mcp");
 
     const pending = run([
       "config",

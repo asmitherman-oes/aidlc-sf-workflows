@@ -4,7 +4,7 @@
 
 The aidlc-aws-platform-agent is your AWS solutions architect and infrastructure engineer. It translates application architectures into AWS service selections, CDK/CloudFormation templates, and environment provisioning strategies. Every infrastructure decision it makes is cost-aware, secure-by-default, and validated against the AWS Well-Architected Framework.
 
-The aidlc-aws-platform-agent leads two stages and supports four others. It has Bash access for running AWS CLI commands, CDK operations, and infrastructure validation tools.
+The aidlc-aws-platform-agent leads two stages (Infrastructure Design and Environment Provisioning, both skipped in the Salesforce route) and supports none. It has Bash access for running AWS CLI commands, CDK operations, and infrastructure validation tools.
 
 ## Stages Led
 

@@ -5,7 +5,7 @@ adds:
   scopes:
     - salesforce-classic
   sensors:
-    - salesforce-apex-antipatterns
+    - salesforce-tool-usage
 fragments:
   - anchor: before-step:3
     order: 100
@@ -19,18 +19,24 @@ fragments:
 
 ### Step 2a (salesforce): Salesforce build instructions
 
-When the work targets Salesforce, "build" means proving the metadata compiles and
-deploys. In `build-instructions.md`, document:
+When the work targets Salesforce, "build" means proving the metadata compiles,
+deploys, and passes Salesforce's analyzers. In `build-instructions.md`, document
+the following.
 
-- The prerequisites: the `sf` CLI (`sf --version`), Node.js for LWC Jest, an
-  authorized validation org alias, and the Salesforce DX MCP server when it is
-  used.
-- The local static checks, which need no org: `npx prettier --check` with
-  `prettier-plugin-apex` if the project uses it, ESLint with
-  `@salesforce/eslint-config-lwc`, and Salesforce Code Analyzer
-  (`sf code-analyzer run --workspace . --target <changed paths>`).
-- The compile and deploy check: `sf project deploy start --dry-run --source-dir <package dirs> --target-org <alias>`
-  (or the MCP `deploy_metadata` tool against a scratch org).
+**Prerequisites:**
+- the `sf` CLI;
+- Node.js for LWC Jest;
+- the `salesforce-dx` MCP server;
+- the Salesforce skills (`npx skills add forcedotcom/sf-skills`).
+
+**Org-free checks:**
+- Salesforce Code Analyzer (MCP `run_code_analyzer`, or **`dx-code-analyzer-run`**);
+- LWC Jest, plus Sa11y through **`experience-lwc-accessibility-jest-run`**;
+- **`design-systems-slds-validate`** for the LWCs.
+
+**Compile and deploy check:**
+- a dry-run deploy following **`platform-metadata-deploy`**, against an
+  authorized non-production org.
 
 ## fragment: before-step:10
 
@@ -38,18 +44,19 @@ deploys. In `build-instructions.md`, document:
 
 When the work targets Salesforce:
 
-- Always run the org-free checks: LWC Jest, ESLint, and Code Analyzer.
-- Apex tests run only inside an org. If a non-production validation org is
-  already authorized for this workflow, run the per-Unit Apex test commands
-  against it (MCP `run_apex_test`, or `sf apex run test ... --code-coverage`).
-  Otherwise, defer Apex execution and the dry-run deployment to the
-  **Salesforce Org Validation** stage, which is scheduled later in this plan and
-  explicitly owns them. Record that stage as the owner and its report
-  (`salesforce-apex-test-report.md`) as the expected evidence path. Deferred
-  Apex checks stay `Unverified` here.
-- Never run tests or deploy against a production org from this stage.
+- Always run the org-free checks: Code Analyzer, LWC Jest, and the SLDS
+  validation. Treat Code Analyzer findings at severity 1–2 as failures.
+- If a non-production validation org is already authorized for this workflow,
+  run the Apex tests against it with the MCP tool `run_apex_test` (following
+  **`platform-apex-test-run`**).
+- Otherwise, defer Apex execution and the dry-run deploy to the **Salesforce Org
+  Validation** stage, which is scheduled later in this plan and owns them.
+  Record that stage as the owner and its `salesforce-apex-test-report.md` as the
+  expected evidence. Deferred checks stay `Unverified` here.
+- Never run tests or deploy against production from this stage.
 
 ## fragment: in:Sensors
 
-The salesforce plugin adds the ADVISORY `salesforce-apex-antipatterns` sensor
-here too, so Apex fixed during test generation is re-checked on write.
+The salesforce plugin binds the BLOCKING `salesforce-tool-usage` gate sensor to
+this stage. The sensor requires a recorded `run_code_analyzer` or
+`dx-code-analyzer-run` call before the approval gate opens.

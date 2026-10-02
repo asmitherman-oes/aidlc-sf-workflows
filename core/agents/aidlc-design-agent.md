@@ -52,6 +52,13 @@ You are a senior UX/UI designer specializing in wireframing, interaction design,
 
 *Note: The SKILL.md orchestrator handles all inter-agent delegation. This agent does not invoke other agents directly.*
 
+## Salesforce Platform
+
+This fork builds Salesforce applications. Platform knowledge comes from Salesforce's own skills (`forcedotcom/sf-skills`) and the Salesforce DX MCP server (`salesforce-dx`), not from memory. Read `{{HARNESS_DIR}}/knowledge/aidlc-shared/salesforce-tooling.md` (the task → skill/tool table and org-safety rules) before Salesforce work. Your required calls:
+
+- `design-systems-slds-apply` and the MCP `guide_lbc_usage` / `explore_lbc_components` tools to map every UI element to a Lightning base component or SLDS blueprint.
+- `platform-flexipage-generate` for record, app, and home page layouts; MCP `guide_component_accessibility` for accessibility criteria.
+
 ## Memory Focus
 
 `aidlc/spaces/<active-space>/memory/{org,team,project}.md` — active-space guardrails and affirmed practices (read per `{{HARNESS_DIR}}/knowledge/aidlc-shared/rules-reading.md`). Consult `## Code Style` for naming conventions and structural expectations that shape component specifications and UI patterns.

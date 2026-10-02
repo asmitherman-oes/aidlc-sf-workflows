@@ -6,7 +6,7 @@ execution: CONDITIONAL
 condition: Execute when ongoing operational monitoring and optimization are needed
 lead_agent: aidlc-operations-agent
 support_agents:
-  - aidlc-aws-platform-agent
+  - aidlc-developer-agent
 mode: inline
 summary_confirmation: required
 produces:
@@ -68,7 +68,7 @@ Follow stage-protocol.md question flow.
 
 ### Step 3: Generate Artifacts
 
-Create SLO compliance report, AWS Cost Explorer analysis & optimization recommendations, AWS Config drift detection report, Trusted Advisor recommendations review, operational insights & improvement proposals, and feedback loop document (inputs to next Ideation cycle).
+Create SLO compliance report, Salesforce org limits and license usage analysis & optimization recommendations, org metadata drift report (dx-org-analyze), Code Analyzer and ApexGuru findings review, operational insights & improvement proposals, and feedback loop document (inputs to next Ideation cycle).
 
 ### Step 4: Completion Handoff
 

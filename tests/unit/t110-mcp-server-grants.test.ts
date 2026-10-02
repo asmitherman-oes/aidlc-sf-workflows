@@ -90,20 +90,24 @@ const AGENTS = [
 // The five public servers the registry must declare (the .sh's for-loop list).
 const EXPECTED_SERVERS = [
   "context7",
-  "aws-mcp",
-  "aws-pricing",
-  "aws-iac",
-  "aws-serverless",
+  "salesforce-dx",
 ] as const;
 
 // aws-* uvx launchers: server -> expected args[0] '<pkg>@latest' pin (the .sh's
 // `$pair` list, L134-138). Hard-coded independently of the file.
-const AWS_PKG_PINS: Record<string, string> = {
-  "aws-mcp": "mcp-proxy-for-aws@latest",
-  "aws-pricing": "awslabs.aws-pricing-mcp-server@latest",
-  "aws-iac": "awslabs.aws-iac-mcp-server@latest",
-  "aws-serverless": "awslabs.aws-serverless-mcp-server@latest",
-};
+// The Salesforce DX MCP toolsets the Salesforce workflow's gate sensor requires.
+const SALESFORCE_TOOLSETS = [
+  "orgs",
+  "metadata",
+  "data",
+  "users",
+  "testing",
+  "code-analysis",
+  "lwc-experts",
+  "aura-experts",
+  "scale-products",
+  "experts-validation",
+] as const;
 
 // ${UPPER_SNAKE} env-var placeholder shape (the .sh's `^\$\{[A-Z0-9_]+\}$`).
 const PLACEHOLDER_RE = /^\$\{[A-Z0-9_]+\}$/;
@@ -220,27 +224,20 @@ describe("t110 MCP registry integrity + inheritance access model (migrated from 
   // aws-* servers — uvx launchers whose first arg is the expected '<pkg>@latest'
   // pin. .sh L134-143: command='uvx', args non-empty, args[0]=pkg — three rows
   // per server × 4 servers = 12 assertions.
-  test("each aws-* server is a uvx launcher pinned to <pkg>@latest [.sh tests 13-24 ×4×3]", () => {
-    for (const [srv, pkg] of Object.entries(AWS_PKG_PINS)) {
-      const cfg = SERVERS[srv] ?? {};
-      // .sh `command` mode.
-      expect(cfg.command, `${srv} command`).toBe("uvx");
-      // .sh `args_nonempty` mode.
-      expect(Array.isArray(cfg.args), `${srv} args is an array`).toBe(true);
-      expect(
-        (cfg.args as unknown[]).length,
-        `${srv} args is non-empty`,
-      ).toBeGreaterThan(0);
-      // .sh `args0` mode.
-      expect((cfg.args as unknown[])[0], `${srv} args[0] pin`).toBe(pkg);
-    }
+  test("salesforce-dx is an npx launcher of @salesforce/mcp [Salesforce-first default]", () => {
+    const cfg = SERVERS["salesforce-dx"] ?? {};
+    expect(cfg.command).toBe("npx");
+    expect(Array.isArray(cfg.args)).toBe(true);
+    expect(cfg.args as unknown[]).toContain("@salesforce/mcp");
+    expect(cfg.args as unknown[]).toContain("--orgs");
   });
 
-  // aws-mcp additionally carries its region metadata in args. .sh L147.
-  test("aws-mcp args carry AWS_REGION=us-east-1 metadata [.sh test 25]", () => {
-    const args = SERVERS["aws-mcp"]?.args;
-    expect(Array.isArray(args)).toBe(true);
-    expect(args as unknown[]).toContain("AWS_REGION=us-east-1");
+  test("salesforce-dx enables every toolset the Salesforce workflow requires", () => {
+    const args = (SERVERS["salesforce-dx"]?.args ?? []) as string[];
+    const i = args.indexOf("--toolsets");
+    expect(i).toBeGreaterThan(-1);
+    const enabled = new Set((args[i + 1] ?? "").split(","));
+    for (const toolset of SALESFORCE_TOOLSETS) expect(enabled.has(toolset), toolset).toBe(true);
   });
 
   // --- No committed secrets: credential-position values are env-var placeholders
@@ -280,9 +277,9 @@ describe("t110 MCP registry integrity + inheritance access model (migrated from 
 
   // --- Exact cardinality + clean top-level shape -----------------------------
   // .sh L199: exactly 5 servers (no 6th unexpected entry).
-  test("mcpServers declares exactly 5 servers (no 6th unexpected entry) [.sh test 29]", () => {
-    expect(Object.keys(SERVERS)).toHaveLength(5);
-    // STRONGER: the five are EXACTLY the expected set, not just count==5.
+  test("mcpServers declares exactly 2 servers (no unexpected entry) [.sh test 29]", () => {
+    expect(Object.keys(SERVERS)).toHaveLength(2);
+    // STRONGER: the two are EXACTLY the expected set, not just count==2.
     expect([...DECLARED].sort()).toEqual([...EXPECTED_SERVERS].sort());
   });
 
@@ -324,7 +321,7 @@ describe("t110 MCP registry integrity + inheritance access model (migrated from 
   // caught — the structural inputs that determine the 32 assertions.
   test("roster + expected-server set match the 32-assertion plan inputs (TAP plan parity)", () => {
     expect(AGENTS.length).toBe(11);
-    expect(EXPECTED_SERVERS.length).toBe(5);
-    expect(Object.keys(AWS_PKG_PINS).length).toBe(4);
+    expect(EXPECTED_SERVERS.length).toBe(2);
+    expect(SALESFORCE_TOOLSETS.length).toBe(10);
   });
 });

@@ -5,7 +5,7 @@ execution: CONDITIONAL
 condition: Execute when new components or logical building blocks are needed. Skip when changes are modifications to existing components only.
 lead_agent: aidlc-architect-agent
 support_agents:
-  - aidlc-aws-platform-agent
+  - aidlc-developer-agent
   - aidlc-design-agent
 mode: inline
 summary_confirmation: required

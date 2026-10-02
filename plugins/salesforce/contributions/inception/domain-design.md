@@ -13,16 +13,15 @@ fragments:
 
 ### Step 4a (salesforce): Salesforce object and component mapping
 
-When the work targets Salesforce, add a `## Salesforce Object Mapping` section
-to `components.md`, below the human-readable view:
+When the work targets Salesforce, add a `## Salesforce Object Mapping` section to
+`components.md`:
 
-- **Entities to SObjects**: `| Entity | Standard/Custom | Candidate API Name | Rationale |`.
-  Reuse a standard object (Account, Contact, Case, Opportunity, …) whenever
-  its semantics match, and say why when they do not.
-- **Components to Salesforce building blocks**: per component, its likely
-  realisation, such as Apex service, selector, or domain classes, a trigger
-  handler, record-triggered Flow, LWC, Platform Event, or integration via
-  Named Credential. Salesforce Solution Design confirms these choices.
-
-Keep the YAML catalogue platform-neutral. The mapping section is the Salesforce
-projection of it.
+- **Entities to SObjects**: a table with the columns
+  `| Entity | Standard/Custom | Candidate API Name | Rationale |`. Check standard
+  objects with **`platform-data-and-tooling-api-context-get`** before proposing
+  a custom one.
+- **Components to Salesforce building blocks**: for each component, give the
+  likely realisation and the Salesforce skill that will generate it. A
+  realisation is one of: Apex service or selector, trigger handler, Flow, LWC,
+  Platform Event, or integration. The skills are listed in
+  `{{HARNESS_DIR}}/knowledge/aidlc-shared/salesforce-tooling.md`.

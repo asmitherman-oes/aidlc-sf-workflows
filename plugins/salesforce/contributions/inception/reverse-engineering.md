@@ -13,23 +13,15 @@ fragments:
 
 ### Step 2a (salesforce): Salesforce DX source scan
 
-When the repository contains `sfdx-project.json`, extend the developer code scan
-with a Salesforce metadata inventory taken from every `packageDirectories` path:
+When the repository contains `sfdx-project.json`, scan it with Salesforce's tools,
+not a generic code scan:
 
-- **Metadata by type.** Count and list `classes/` (Apex; separate `@IsTest`
-  classes), `triggers/` (with object and events), `lwc/` and `aura/` bundles,
-  `flows/` (with process type and trigger object), `objects/` (custom objects
-  and fields, record types, validation rules, list views), `permissionsets/`,
-  `permissionsetgroups/`, `profiles/`, `layouts/`, `flexipages/`,
-  `customMetadata/`, `labels/`, `namedCredentials/`, and `staticresources/`.
-- **Patterns.** Identify the trigger framework (one trigger per object with a
-  handler, or logic in triggers), the service, selector, and domain layering,
-  the test data factory, async usage (Queueable, Batch, `@future`, Schedulable,
-  Platform Events), and a logging framework.
-- **Risks.** Flag SOQL or DML inside loops, hardcoded record Ids,
-  `without sharing` classes, `SeeAllData=true`, Process Builder or Workflow Rule
-  leftovers, multiple triggers on one object, and the `sourceApiVersion` gap
-  against the current release.
-
-Record the inventory in the technology-stack and code-quality-assessment
-artifacts. Salesforce Org Analysis later reconciles it with the live org.
+- Run Salesforce Code Analyzer over the package directories (MCP
+  `run_code_analyzer`, or the **`dx-code-analyzer-run`** skill) and MCP
+  `scan_apex_class_for_antipatterns` on the Apex classes and triggers. Record
+  the findings in the code-quality-assessment artifact.
+- Inventory the metadata by type from every `packageDirectories` path: Apex,
+  triggers, LWC, Aura, flows, objects and fields, permission sets, Lightning
+  pages, and custom metadata. Record the trigger framework, the async patterns,
+  and the `sourceApiVersion` in the technology-stack artifact.
+- List Aura bundles as migration candidates for **`experience-aura-lwc-migrate`**.

@@ -885,7 +885,7 @@ Complete reference of all 33 stages with execution metadata. The welcome message
 | 0.3 | State Initialization | Initialization | ALWAYS | (orchestrator) | -- | inline |
 | 1.1 | Intent Capture & Framing | Ideation | ALWAYS | aidlc-product-agent | aidlc-architect-agent | inline |
 | 1.2 | Market Research | Ideation | CONDITIONAL | aidlc-product-agent | -- | inline |
-| 1.3 | Feasibility & Constraints | Ideation | CONDITIONAL | aidlc-architect-agent | aidlc-aws-platform-agent, aidlc-compliance-agent | inline |
+| 1.3 | Feasibility & Constraints | Ideation | CONDITIONAL | aidlc-architect-agent | aidlc-compliance-agent | inline |
 | 1.4 | Scope Definition | Ideation | ALWAYS | aidlc-product-agent | aidlc-delivery-agent | inline |
 | 1.5 | Team Formation | Ideation | CONDITIONAL | aidlc-delivery-agent | -- | inline |
 | 1.6 | Rough Mockups | Ideation | CONDITIONAL | aidlc-design-agent | aidlc-product-agent | inline |
@@ -895,13 +895,13 @@ Complete reference of all 33 stages with execution metadata. The welcome message
 | 2.3 | Requirements Analysis | Inception | ALWAYS | aidlc-product-agent | -- | inline |
 | 2.4 | User Stories | Inception | CONDITIONAL | aidlc-product-agent | aidlc-design-agent, aidlc-developer-agent, aidlc-quality-agent | mob |
 | 2.5 | Refined Mockups | Inception | CONDITIONAL | aidlc-design-agent | aidlc-product-agent | inline |
-| 2.6 | Domain Design | Inception | CONDITIONAL | aidlc-architect-agent | aidlc-aws-platform-agent, aidlc-design-agent | inline |
+| 2.6 | Domain Design | Inception | CONDITIONAL | aidlc-architect-agent | aidlc-developer-agent, aidlc-design-agent | inline |
 | 2.7 | Units Generation | Inception | ALWAYS | aidlc-architect-agent | aidlc-delivery-agent | inline |
-| 2.8 | Contract Design | Inception | CONDITIONAL | aidlc-architect-agent | aidlc-aws-platform-agent | inline |
+| 2.8 | Contract Design | Inception | CONDITIONAL | aidlc-architect-agent | aidlc-developer-agent | inline |
 | 2.9 | Delivery Planning | Inception | ALWAYS | aidlc-delivery-agent | aidlc-architect-agent | inline |
 | 3.1 | Functional Design | Construction | CONDITIONAL | aidlc-architect-agent | aidlc-developer-agent | inline |
 | 3.2 | NFR Requirements | Construction | CONDITIONAL | aidlc-architect-agent | aidlc-devsecops-agent, aidlc-compliance-agent, aidlc-quality-agent | inline |
-| 3.3 | NFR Design | Construction | CONDITIONAL | aidlc-architect-agent | aidlc-aws-platform-agent | inline |
+| 3.3 | NFR Design | Construction | CONDITIONAL | aidlc-architect-agent | aidlc-developer-agent | inline |
 | 3.4 | Infrastructure Design | Construction | CONDITIONAL | aidlc-aws-platform-agent | aidlc-devsecops-agent, aidlc-compliance-agent | inline |
 | 3.5 | Code Generation | Construction | ALWAYS | aidlc-developer-agent | -- | subagent (aidlc-developer-agent) |
 | 3.6 | Build and Test | Construction | ALWAYS | aidlc-quality-agent | aidlc-devsecops-agent | inline |
@@ -912,7 +912,7 @@ Complete reference of all 33 stages with execution metadata. The welcome message
 | 4.4 | Observability Setup | Operation | CONDITIONAL | aidlc-operations-agent | -- | inline |
 | 4.5 | Incident Response | Operation | CONDITIONAL | aidlc-operations-agent | -- | inline |
 | 4.6 | Performance Validation | Operation | CONDITIONAL | aidlc-quality-agent | -- | inline |
-| 4.7 | Feedback & Optimization | Operation | CONDITIONAL | aidlc-operations-agent | aidlc-aws-platform-agent | inline |
+| 4.7 | Feedback & Optimization | Operation | CONDITIONAL | aidlc-operations-agent | aidlc-developer-agent | inline |
 
 **Execution key:**
 - ALWAYS: Executes for all scopes that include this stage.

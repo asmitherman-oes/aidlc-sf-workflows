@@ -166,12 +166,12 @@ Use `--mcp none` to omit them. The default set is:
 | Server | Provides | Credentials |
 | --- | --- | --- |
 | `context7` | Library and SDK documentation | `CONTEXT7_API_KEY` |
-| `aws-mcp` | AWS API access | AWS credential chain |
-| `aws-pricing` | AWS pricing queries | AWS credential chain |
-| `aws-iac` | Infrastructure-as-code tools | AWS credential chain |
-| `aws-serverless` | Serverless development tools | AWS credential chain |
+| `salesforce-dx` | Salesforce DX MCP server (`@salesforce/mcp`): orgs, metadata, data, users, testing, code-analysis, lwc-experts, aura-experts, scale-products, experts-validation toolsets | Orgs authorized with `sf org login` |
 
-The four AWS servers require `uvx` and use the standard AWS credential chain.
+`salesforce-dx` runs through `npx` and reuses the orgs you authorized with the
+Salesforce CLI. This fork is Salesforce-first, so the Claude defaults no longer
+include the AWS MCP servers. Add the Salesforce agent skills with
+`npx skills add forcedotcom/sf-skills`; the Salesforce workflow requires both.
 
 Every agent in the Claude session inherits available MCP servers. Missing
 credentials make a server unavailable but do not block a workflow. Never put

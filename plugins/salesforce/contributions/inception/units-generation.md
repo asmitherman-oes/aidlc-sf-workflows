@@ -13,18 +13,13 @@ fragments:
 
 ### Step 5a (salesforce): Salesforce Unit boundaries
 
-When the work targets Salesforce, check each Unit of Work against metadata
-deployability:
+When the work targets Salesforce:
 
-- Every Unit should map to a package directory (or a clearly owned folder set
-  inside one) in `sfdx-project.json`, so it can be deployed and tested
-  independently.
-- Record schema dependencies explicitly: a Unit that adds fields another Unit's
-  Apex references must deploy first, and that ordering belongs in
-  `unit-of-work-dependency.md`.
-- Shared org-wide metadata (custom objects and fields used by several Units,
-  global value sets, permission set groups) gets one owning Unit. Prefer a
-  foundation or "schema" Unit that the others depend on.
-- Use the Unit `kind` values the engine knows: an Apex/LWC feature is `service`
-  or `ui`, a metadata-only foundation is `library`, and a package or release
-  Unit is `packaging`.
+- Map each Unit to a package directory in `sfdx-project.json`, or to a clearly
+  owned set of folders inside one.
+- Put Units that own schema before the Units whose Apex, Flows, or LWCs
+  reference that schema.
+- Give shared metadata exactly one owning Unit.
+- Set each Unit's kind: Apex or LWC features are `service` or `ui`, a
+  metadata-only foundation is `library`, and a package or release Unit is
+  `packaging`.

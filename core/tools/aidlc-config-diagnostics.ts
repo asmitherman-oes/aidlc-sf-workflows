@@ -1835,13 +1835,21 @@ export function completionInstruction(
   return `eval "$(${invoke} system completions ${shell})"`;
 }
 
-const SHIPPED_MCP_SERVERS = [
+// The MCP entries each surface ships. The Claude projection is Salesforce-first
+// (context7 + the Salesforce DX MCP server); the always-shipped surfaces of the
+// other harnesses keep their original defaults.
+const SHIPPED_MCP_SERVERS_CLAUDE = ["context7", "salesforce-dx"] as const;
+const SHIPPED_MCP_SERVERS_OTHER = [
   "aws-iac",
   "aws-mcp",
   "aws-pricing",
   "aws-serverless",
   "context7",
 ] as const;
+
+function shippedMcpServers(kind: string): readonly string[] {
+  return kind === "claude" ? SHIPPED_MCP_SERVERS_CLAUDE : SHIPPED_MCP_SERVERS_OTHER;
+}
 
 export function projectChoiceFiles(
   projectDir: string,
@@ -1948,7 +1956,7 @@ export function projectChoiceIssues(
   }
   if (
     record.mcp === "defaults" &&
-    SHIPPED_MCP_SERVERS.some((name) => !servers.has(name))
+    shippedMcpServers(surface.kind).some((name) => !servers.has(name))
   ) {
     issues.push({
       id: "project-mcp-defaults-drift",
@@ -1959,7 +1967,7 @@ export function projectChoiceIssues(
   if (
     surface.kind === "claude" &&
     record.mcp === "none" &&
-    SHIPPED_MCP_SERVERS.some((name) => servers.has(name))
+    shippedMcpServers(surface.kind).some((name) => servers.has(name))
   ) {
     issues.push({
       id: "project-mcp-none-drift",
@@ -2131,9 +2139,13 @@ export function providerSurfaceIssues(
       const mcpPath = join(projectDir, ".mcp.json");
       if (existsSync(mcpPath)) {
         const text = readFileSync(mcpPath, "utf-8");
+        // The Salesforce-first Claude projection ships no aws-mcp server; the
+        // region only has to be reflected where that server is declared.
+        const declaresAwsMcp = text.includes('"aws-mcp"');
         if (
-          !text.includes(`https://aws-mcp.${record.region}.api.aws/mcp`) ||
-          !text.includes(`AWS_REGION=${record.region}`)
+          declaresAwsMcp &&
+          (!text.includes(`https://aws-mcp.${record.region}.api.aws/mcp`) ||
+            !text.includes(`AWS_REGION=${record.region}`))
         ) {
           mismatch("provider-claude-mcp", mcpPath, "Claude AWS MCP settings do not reflect the recorded region");
         }

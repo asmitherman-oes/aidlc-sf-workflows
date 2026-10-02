@@ -31,7 +31,7 @@ messages, and state tracking.
 | 4.4   | Observability Setup      | CONDITIONAL | Execute when monitoring, dashboards, alarms, or tracing need config    | aidlc-operations-agent    | (none)              | inline                           |
 | 4.5   | Incident Response        | CONDITIONAL | Execute when operational runbooks and incident response procedures needed | aidlc-operations-agent | (none)              | inline                           |
 | 4.6   | Performance Validation   | CONDITIONAL | Execute when NFR performance targets need validation under load        | aidlc-quality-agent       | (none)              | inline                           |
-| 4.7   | Feedback & Optimization  | CONDITIONAL | Execute when ongoing operational monitoring and optimization needed    | aidlc-operations-agent    | aidlc-aws-platform-agent  | inline                           |
+| 4.7   | Feedback & Optimization  | CONDITIONAL | Execute when ongoing operational monitoring and optimization needed    | aidlc-operations-agent    | aidlc-developer-agent  | inline                           |
 
 ### Multi-Agent Stages
 
@@ -39,7 +39,7 @@ Three Operation stages involve multiple agents:
 
 - **4.2 Environment Provisioning**: aidlc-aws-platform-agent (lead) + aidlc-devsecops-agent (security posture validation) + aidlc-compliance-agent (data residency, regulatory controls)
 - **4.3 Deployment Execution**: aidlc-pipeline-deploy-agent (lead) + aidlc-developer-agent (database migrations)
-- **4.7 Feedback & Optimization**: aidlc-operations-agent (lead) + aidlc-aws-platform-agent (cost optimization, drift detection)
+- **4.7 Feedback & Optimization**: aidlc-operations-agent (lead) + aidlc-developer-agent (org limits, drift detection)
 
 In all cases, the conductor invokes the lead agent first, then invokes
 support agents with the lead's output as context. The conductor performs
@@ -241,7 +241,7 @@ Design and execute load tests to validate NFR performance targets against the de
 | Phase             | Operation                                                                                         |
 | Execution         | CONDITIONAL (skip for one-off deployments)                                                        |
 | Lead Agent        | aidlc-operations-agent                                                                                  |
-| support_agents    | aidlc-aws-platform-agent (cost optimization, drift detection)                                           |
+| support_agents    | aidlc-developer-agent (org limits, drift detection)                                                     |
 | Inputs            | All Operation phase artifacts, production monitoring data                                         |
 
 ### Purpose

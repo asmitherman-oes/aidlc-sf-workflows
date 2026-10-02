@@ -168,6 +168,16 @@
         ]
       },
       {
+        "matcher": "mcp__.*|Skill|Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun \"$CLAUDE_PROJECT_DIR/{{HARNESS_DIR}}/tools/aidlc.ts\" engine hook record-tool-calls",
+            "timeout": 60
+          }
+        ]
+      },
+      {
         "matcher": "",
         "hooks": [
           {

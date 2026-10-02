@@ -13,22 +13,19 @@ fragments:
 
 ### Step 4a (salesforce): Salesforce CI pipeline
 
-When the work targets Salesforce, the generated CI configuration (GitHub
-Actions, GitLab CI, Azure DevOps, or the team's tool) must:
+When the work targets Salesforce, design the CI configuration with Salesforce's
+DevOps skills: **`platform-metadata-deploy`** (sf CLI v2 deploy, validate, and
+quick-deploy pipelines) and **`dx-code-analyzer-configure`** (the Code Analyzer
+configuration and severity gates). If the team uses DevOps Center, use the
+**`dx-devops-pipeline-manage`** and **`dx-devops-test-pipeline-configure`**
+skills, or the MCP `devops` toolset, instead of a hand-rolled pipeline.
 
-- Install the `sf` CLI (`npm install --global @salesforce/cli`) and the Code
-  Analyzer plugin.
-- Authenticate non-interactively with the JWT bearer flow:
-  `sf org login jwt --client-id $SF_CLIENT_ID --jwt-key-file server.key --username $SF_USERNAME --instance-url <login url> --alias ci-target`.
-  Keep the key and client id in CI secrets, never in the repository.
-- On pull requests: run LWC Jest, ESLint, and Code Analyzer (fail on severity
-  1–2), then a check-only validation
-  (`sf project deploy validate --source-dir <dirs> --test-level RunLocalTests --target-org ci-target`)
-  or a deploy to an ephemeral scratch org with `sf apex run test --code-coverage`.
-- On merge to the release branch: quick deploy the validated job id
-  (`sf project deploy quick --job-id <id>`), or a full deploy with tests for
-  non-production targets.
-- Optionally deploy deltas with `sfdx-git-delta` when the project uses it,
-  including generated destructive changes.
-- Treat failing Apex tests, coverage below the NFR target, and Critical or High
-  analyzer findings as quality-gate failures in `quality-gates.md`.
+The pipeline must authenticate non-interactively (JWT bearer flow, with secrets
+held in CI), and must:
+
+- on pull requests, run Code Analyzer, LWC Jest, and a check-only validation
+  with tests;
+- on merge, quick-deploy the validated job.
+
+Record failing Apex tests, coverage below the NFR target, and Code Analyzer
+findings at severity 1–2 as quality-gate failures in `quality-gates.md`.

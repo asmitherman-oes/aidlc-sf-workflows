@@ -141,10 +141,10 @@ access grant.
 | aidlc-design-agent | No | Yes | judgment | 2 | 2 | 4 |
 | aidlc-delivery-agent | No | No | templated | 3 | 2 | 5 |
 | aidlc-architect-agent | No | No | judgment | 7 | 3 | 10 |
-| aidlc-aws-platform-agent | Yes | No | judgment | 2 | 5 | 7 |
+| aidlc-aws-platform-agent | Yes | No | judgment | 2 | 0 | 2 |
 | aidlc-compliance-agent | No | Yes | judgment | 0 | 4 | 4 |
 | aidlc-devsecops-agent | Yes | No | judgment | 0 | 5 | 5 |
-| aidlc-developer-agent | Yes | No | judgment | 2 | 4 | 6 |
+| aidlc-developer-agent | Yes | No | judgment | 2 | 8 | 10 |
 | aidlc-quality-agent | Yes | No | judgment | 2 | 3 | 5 |
 | aidlc-pipeline-deploy-agent | Yes | No | templated | 4 | 0 | 4 |
 | aidlc-operations-agent | Yes | No | templated | 3 | 0 | 3 |
@@ -166,10 +166,10 @@ access grant.
 | aidlc-design-agent | -- | L (rough-mockups) | L (refined-mockups), S (user-stories, domain-design) | -- | -- |
 | aidlc-delivery-agent | -- | L (team-formation, approval-handoff), S (scope-definition) | L (delivery-planning), S (units-generation) | -- | -- |
 | aidlc-architect-agent | -- | L (feasibility), S (intent-capture) | L (domain-design, units-generation, contract-design), S (reverse-engineering, delivery-planning) | L (functional-design, nfr-requirements, nfr-design) | -- |
-| aidlc-aws-platform-agent | -- | S (feasibility) | S (domain-design, contract-design) | L (infrastructure-design), S (nfr-design) | L (environment-provisioning), S (feedback-optimization) |
+| aidlc-aws-platform-agent | -- | -- | -- | L (infrastructure-design) | L (environment-provisioning) |
 | aidlc-compliance-agent | -- | S (feasibility) | -- | S (nfr-requirements, infrastructure-design) | S (environment-provisioning) |
 | aidlc-devsecops-agent | -- | -- | S (practices-discovery) | S (nfr-requirements, infrastructure-design, build-and-test) | S (environment-provisioning) |
-| aidlc-developer-agent | -- | -- | L (reverse-engineering), S (practices-discovery, user-stories) | L (code-generation), S (functional-design) | S (deployment-execution) |
+| aidlc-developer-agent | -- | -- | L (reverse-engineering), S (practices-discovery, user-stories, domain-design, contract-design) | L (code-generation), S (functional-design, nfr-design) | S (deployment-execution, feedback-optimization) |
 | aidlc-quality-agent | -- | -- | S (practices-discovery, user-stories) | L (build-and-test), S (nfr-requirements) | L (performance-validation) |
 | aidlc-pipeline-deploy-agent | -- | -- | L (practices-discovery) | L (ci-pipeline) | L (deployment-pipeline, deployment-execution) |
 | aidlc-operations-agent | -- | -- | -- | -- | L (observability-setup, incident-response, feedback-optimization) |

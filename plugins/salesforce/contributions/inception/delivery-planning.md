@@ -13,20 +13,16 @@ fragments:
 
 ### Step 4a (salesforce): Salesforce delivery constraints
 
-When the work targets Salesforce, reflect platform delivery realities in the
-Bolt plan and risk rationale:
+When the work targets Salesforce:
 
-- Sequence schema-owning Units before the Units whose Apex, Flows, or LWCs
-  reference that schema.
-- Name the development environment per Bolt (scratch org per developer or
-  feature, or a shared Developer sandbox) and the integration org where Bolts
-  meet.
-- Note the Salesforce seasonal release dates (Spring, Summer, Winter) and
-  sandbox preview windows that overlap the plan, plus any production release
-  windows or change freezes.
-- Record Salesforce-specific external dependencies: Dev Hub access, sandbox
-  refreshes, connected or external client app setup, AppExchange installs, and
-  license procurement.
+- Schedule Units that own schema first.
+- Name the development org for each Bolt: a scratch org (see
+  **`dx-org-manage`**) or a Developer sandbox.
+- Note the Salesforce seasonal releases and sandbox preview dates that overlap
+  the plan. Get the dates from **`platform-docs-get`**.
+- Record the Salesforce-specific dependencies: Dev Hub access, sandbox
+  refreshes, connected or external client apps, AppExchange installs, and
+  licenses.
 
-Salesforce Solution Design, which runs after this stage, will refine the
-environment path. Keep the plan consistent with it.
+Salesforce Solution Design runs after this stage and refines the environment
+path.

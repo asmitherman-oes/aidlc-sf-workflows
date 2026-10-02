@@ -88,9 +88,9 @@ Stage 2.2, and the User Stories mob at Stage 2.4.
 | 2.3   | Requirements Analysis  | ALWAYS      | aidlc-product-agent          | --                                                   | inline                           |
 | 2.4   | User Stories           | CONDITIONAL | aidlc-product-agent          | aidlc-design-agent, aidlc-developer-agent, aidlc-quality-agent | mob                              |
 | 2.5   | Refined Mockups        | CONDITIONAL | aidlc-design-agent           | aidlc-product-agent                                        | inline                           |
-| 2.6   | Domain Design     | CONDITIONAL | aidlc-architect-agent        | aidlc-aws-platform-agent, aidlc-design-agent               | inline                           |
+| 2.6   | Domain Design     | CONDITIONAL | aidlc-architect-agent        | aidlc-developer-agent, aidlc-design-agent               | inline                           |
 | 2.7   | Units Generation       | ALWAYS      | aidlc-architect-agent        | aidlc-delivery-agent                                       | inline                           |
-| 2.8   | Contract Design        | CONDITIONAL | aidlc-architect-agent        | aidlc-aws-platform-agent                                   | inline                           |
+| 2.8   | Contract Design        | CONDITIONAL | aidlc-architect-agent        | aidlc-developer-agent                                   | inline                           |
 | 2.9   | Delivery Planning      | ALWAYS      | aidlc-delivery-agent         | aidlc-architect-agent                                      | inline                           |
 
 ---
@@ -796,7 +796,7 @@ Standard 2-option gate: **Approve** / **Request Changes**.
 | Stage #          | 2.6                                                                    |
 | Condition        | CONDITIONAL -- execute when new components or services are needed; skip for modifications to existing components only |
 | Lead Agent       | aidlc-architect-agent                                                        |
-| Support Agents   | aidlc-aws-platform-agent, aidlc-design-agent                                |
+| Support Agents   | aidlc-developer-agent, aidlc-design-agent                                   |
 | Mode             | inline                                                                 |
 | Completion Emoji | :building_construction:                                                |
 
@@ -810,7 +810,7 @@ its dependencies and dependents, and the entities it owns, plus the rationale
 for each boundary. It does NOT decide deployment topology (that is Units
 Generation) or tech stack / NFR patterns (later stages).
 
-The aidlc-aws-platform-agent provides supporting perspective on managed-service
+The aidlc-developer-agent provides supporting perspective on Salesforce standard-object and platform
 dependencies; the aidlc-design-agent contributes UI component structure.
 
 ### Inputs
@@ -1053,7 +1053,7 @@ Standard 2-option gate: **Approve** (continue to Construction phase) /
 | Stage #          | 2.8                                                                    |
 | Condition        | CONDITIONAL -- execute whenever there is a contract to pin: an inter-unit boundary or a public/external API; skip only a single self-contained unit with neither |
 | Lead Agent       | aidlc-architect-agent                                                        |
-| Support Agents   | aidlc-aws-platform-agent                                                    |
+| Support Agents   | aidlc-developer-agent                                                       |
 | Mode             | inline                                                                 |
 | Completion Emoji | :building_construction:                                                |
 

@@ -662,7 +662,7 @@ judgment-call objections surface to the human mid-stage — but on every topolog
 conductor performs every delegation; agents never spawn subagents. See
 `stage-protocol-ensemble.md` for the full contract.
 
-Example: Feasibility uses `aidlc-architect-agent` (lead) + `aidlc-aws-platform-agent` +
+Example: Feasibility uses `aidlc-architect-agent` (lead) +
 `aidlc-compliance-agent`, all inline. The mob showcase is `user-stories`: the
 `aidlc-product-agent` drafts personas and stories; design, developer, and quality
 collaborators contribute against that draft while mutually blind; then the lead

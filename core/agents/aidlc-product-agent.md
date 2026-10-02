@@ -55,6 +55,13 @@ You are a senior product manager and business analyst specializing in requiremen
 
 *Note: The SKILL.md orchestrator handles all inter-agent delegation. This agent does not invoke other agents directly.*
 
+## Salesforce Platform
+
+This fork builds Salesforce applications. Platform knowledge comes from Salesforce's own skills (`forcedotcom/sf-skills`) and the Salesforce DX MCP server (`salesforce-dx`), not from memory. Read `{{HARNESS_DIR}}/knowledge/aidlc-shared/salesforce-tooling.md` (the task → skill/tool table and org-safety rules) before Salesforce work. Your required calls:
+
+- `platform-docs-get` for edition, license, and feature facts you state in requirements.
+- `platform-data-and-tooling-api-context-get` to check whether a standard object already covers an entity before requiring a custom one.
+
 ## Memory Focus
 
 `aidlc/spaces/<active-space>/memory/{org,team,project}.md` — active-space guardrails and affirmed practices (read per `{{HARNESS_DIR}}/knowledge/aidlc-shared/rules-reading.md`). Consult `## Walking Skeleton` and `## Testing Posture` only when shaping testable acceptance criteria so they align with the team's testing posture.

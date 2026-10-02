@@ -6,7 +6,6 @@ execution: CONDITIONAL
 condition: Execute when there are integration constraints, regulatory requirements, or significant technical uncertainty. Skip for trivial changes with no technical risk.
 lead_agent: aidlc-architect-agent
 support_agents:
-  - aidlc-aws-platform-agent
   - aidlc-compliance-agent
 mode: inline
 summary_confirmation: required
@@ -57,7 +56,7 @@ Create `<record>/ideation/feasibility/feasibility-questions.md` with questions:
 - What is the team's current tech stack and skill profile?
 - What are the budget and timeline constraints?
 - Are there organizational blockers (change freeze, competing priorities)?
-- What AWS services and accounts are currently in use?
+- Which Salesforce orgs, editions, clouds, and installed packages are currently in use?
 
 Follow stage-protocol.md question flow.
 
@@ -69,7 +68,7 @@ Run ambiguity detection and contradiction analysis.
 
 Create feasibility assessment (technical viability, risk analysis), constraint register (technical, organizational, regulatory), and RAID log (Risks, Assumptions, Issues, Dependencies).
 
-The orchestrator will pass these artifacts to aidlc-aws-platform-agent for AWS landscape assessment and aidlc-compliance-agent for regulatory scanning, then synthesize all inputs.
+The orchestrator will pass these artifacts to aidlc-compliance-agent for regulatory scanning, then synthesize all inputs.
 
 ### Step 5: Completion Handoff
 

@@ -6,7 +6,7 @@ execution: CONDITIONAL
 condition: NFR Requirements was executed and NFR patterns need design. Skip if NFR Requirements was skipped.
 lead_agent: aidlc-architect-agent
 support_agents:
-  - aidlc-aws-platform-agent
+  - aidlc-developer-agent
 mode: inline
 summary_confirmation: required
 reviewer: aidlc-architecture-reviewer-agent

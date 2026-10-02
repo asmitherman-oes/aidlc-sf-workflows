@@ -650,11 +650,8 @@ describe("t295 project section", () => {
     ], project, runtimeEnv()).status).toBe(0);
     const defaults = JSON.parse(readFileSync(join(project, ".mcp.json"), "utf-8"));
     expect(Object.keys(defaults.mcpServers).sort()).toEqual([
-      "aws-iac",
-      "aws-mcp",
-      "aws-pricing",
-      "aws-serverless",
       "context7",
+      "salesforce-dx",
     ]);
 
     expect(run([

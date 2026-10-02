@@ -618,7 +618,7 @@ describe("t116 inline context roster", () => {
     const customPaths = [
       `aidlc/spaces/${DEFAULT_SPACE}/knowledge/aidlc-shared/team-context.md`,
       `aidlc/spaces/${DEFAULT_SPACE}/knowledge/aidlc-architect-agent/architecture-context.md`,
-      `aidlc/spaces/${DEFAULT_SPACE}/knowledge/aidlc-aws-platform-agent/platform-context.md`,
+      `aidlc/spaces/${DEFAULT_SPACE}/knowledge/aidlc-developer-agent/developer-context.md`,
       `aidlc/spaces/${DEFAULT_SPACE}/knowledge/aidlc-design-agent/design-context.md`,
     ];
     const { directive, projectDir } = emitForWithProject(
@@ -637,7 +637,7 @@ describe("t116 inline context roster", () => {
     expect(directive.mode).toBe("inline");
     expect(directive.lead_agent).toBe("aidlc-architect-agent");
     expect(directive.support_agents).toEqual([
-      "aidlc-aws-platform-agent",
+      "aidlc-developer-agent",
       "aidlc-design-agent",
     ]);
     expect(directive.rules_in_context).toEqual([

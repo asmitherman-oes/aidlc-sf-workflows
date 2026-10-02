@@ -15,11 +15,12 @@ fragments:
 
 When the work targets Salesforce:
 
-- Add a `## Salesforce Persona Access` section to `personas.md`: per persona,
-  the user license, the intended permission set group, the role in the
-  hierarchy, and the records they must see or edit.
-- Write acceptance criteria that Salesforce tests can check: name the object and
-  field API names when known, the record access expected ("a Sales Rep cannot
-  edit Closed Won opportunities they do not own"), bulk behaviour for data-load
-  stories ("200 records in one transaction"), and the UI surface (record page,
-  app page, Experience Cloud page).
+- Add a `## Salesforce Persona Access` section to `personas.md`. For each persona,
+  give the user license, the intended permission set group, the role, and the
+  records the persona must see or edit.
+- Write acceptance criteria that tests can check:
+  - name the object and field API names, confirming standard ones with
+    **`platform-data-and-tooling-api-context-get`**;
+  - state the expected record access;
+  - state the bulk behaviour (200 records per transaction);
+  - name the UI surface.

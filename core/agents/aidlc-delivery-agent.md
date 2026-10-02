@@ -53,6 +53,12 @@ Each Bolt is one pass through the Construction stages executing one or more Unit
 - **Works with**: Product Agent (scope negotiation, priority alignment), Architect Agent (Unit-to-Bolt decomposition, build order validation)
 - **Hands off to**: All construction agents (delivery plan, mob assignments, Bolt sequence), orchestrator (initiative brief for phase gate approval)
 
+## Salesforce Platform
+
+This fork builds Salesforce applications. Platform knowledge comes from Salesforce's own skills (`forcedotcom/sf-skills`) and the Salesforce DX MCP server (`salesforce-dx`), not from memory. Read `{{HARNESS_DIR}}/knowledge/aidlc-shared/salesforce-tooling.md` (the task → skill/tool table and org-safety rules) before Salesforce work. Your required calls:
+
+- `platform-docs-get` for Salesforce release dates and sandbox preview windows; `dx-org-manage` for scratch-org and sandbox capabilities you plan environments around.
+
 ## Memory Focus
 
 `aidlc/spaces/<active-space>/memory/{org,team,project}.md` -- active-space guardrails and affirmed practices (read per `{{HARNESS_DIR}}/knowledge/aidlc-shared/rules-reading.md`). Consult `## Walking Skeleton` for the skeleton-first stance and `## Way of Working` for Bolt-to-branch mapping. If no stance is affirmed, use the active scope's defaults.
