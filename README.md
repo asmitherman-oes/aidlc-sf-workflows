@@ -8,9 +8,169 @@ and GitHub Copilot.
 ![version](https://img.shields.io/badge/version-2.10.0-blue)
 ![license](https://img.shields.io/badge/license-MIT--0-green)
 
-The Quick Start below installs the latest stable AI-DLC release.
+> **This is the Salesforce-first fork of AI-DLC.** To use it for Salesforce
+> development, follow
+> [Salesforce Edition: install and run](#salesforce-edition-install-and-run).
+> The generic Quick Start further down installs the upstream AWS release, not
+> this fork.
 
-## Quick Start
+## Salesforce Edition: install and run
+
+This fork adapts AI-DLC to Salesforce application development. The existing
+AI-DLC agents do the Salesforce work through Salesforce's own tooling: the
+official agent skills in
+[`forcedotcom/sf-skills`](https://github.com/forcedotcom/sf-skills) and the
+[Salesforce DX MCP server](https://github.com/salesforcecli/mcp). The
+`salesforce` plugin adds the `salesforce-classic` workflow profile, Salesforce
+design, validation, and release stages, and a gate that blocks a stage's
+approval until the required Salesforce skills and MCP tools have actually
+been called. Design details are in
+[`plugins/salesforce/README.md`](plugins/salesforce/README.md).
+
+There are three parts, and the setup needs all of them:
+
+1. The fork's AI-DLC core, built from this repository and installed into your
+   Salesforce DX project.
+2. The `salesforce` plugin, installed into Claude Code.
+3. Salesforce's tooling in your project: the sf-skills, the Salesforce CLI, and
+   an authorized org.
+
+### Prerequisites
+
+Install these once on the machine:
+
+| Tool | Why | Install |
+|------|-----|---------|
+| [Git](https://git-scm.com/) | Clone the fork | – |
+| [Bun](https://bun.sh/) ≥ 1.3 | Builds the fork and runs AI-DLC | `curl -fsSL https://bun.sh/install \| bash` (Windows: `powershell -c "irm bun.sh/install.ps1 \| iex"`) |
+| [Node.js](https://nodejs.org/) ≥ 20 (with `npx`) | Runs the Salesforce DX MCP server and the skills installer | – |
+| [Salesforce CLI](https://developer.salesforce.com/tools/salesforcecli) (`sf`) | Org auth, deploys, tests | `npm install --global @salesforce/cli` |
+| [Claude Code](https://code.claude.com/) | The harness | – |
+
+You also need a Salesforce DX project (one with `sfdx-project.json`); create
+one with `sf project generate --name my-project` if you don't have it. A Dev
+Hub is optional, and only needed if you want scratch orgs.
+
+### 1. Clone and build the fork
+
+```bash
+git clone -b dev/engage-aidlc https://github.com/asmitherman-oes/aidlc-sf-workflows.git
+cd aidlc-sf-workflows
+bun install
+bun scripts/package.ts
+```
+
+`bun scripts/package.ts` writes the installable core to `dist-release/claude/`
+and the Claude plugin to `dist/plugins/salesforce/claude/`. Re-run it after
+every `git pull`.
+
+### 2. Install the fork's core into your Salesforce DX project
+
+Use the fork's own installer. It merges into an existing `.mcp.json` and
+`.gitignore` instead of overwriting them.
+
+macOS / Linux / WSL, from the `aidlc-sf-workflows` folder:
+
+```bash
+FORK="$PWD"
+bun "$FORK/dist-release/claude/.claude/tools/aidlc.ts" config --harness claude \
+  --from "$FORK/dist-release/claude" --project-dir /path/to/your-sfdx-project --mcp defaults --yes
+```
+
+Windows PowerShell, from the `aidlc-sf-workflows` folder:
+
+```powershell
+$FORK = (Get-Location).Path
+bun "$FORK\dist-release\claude\.claude\tools\aidlc.ts" config --harness claude `
+  --from "$FORK\dist-release\claude" --project-dir C:\path\to\your-sfdx-project --mcp defaults --yes
+```
+
+This adds `.claude/` (agents, stages, hooks, and the tool-call recorder) and
+`aidlc/` to the project. It also registers the `salesforce-dx` MCP server in
+`.mcp.json` with the toolsets the workflow requires (orgs, metadata, data, users,
+testing, code-analysis, lwc-experts, aura-experts, scale-products,
+experts-validation).
+
+### 3. Add Salesforce's tooling to the project
+
+Run these from your Salesforce DX project folder:
+
+```bash
+# Official Salesforce agent skills, installed for Claude Code (project level)
+npx -y skills add forcedotcom/sf-skills --agent claude-code --skill '*' --yes --copy
+
+# Authorize the org(s) the Salesforce DX MCP server will use
+sf org login web --alias my-sandbox --instance-url https://test.salesforce.com --set-default
+sf org login web --alias devhub --set-default-dev-hub    # optional: only for scratch orgs
+```
+
+The MCP server is configured with `--orgs DEFAULT_TARGET_ORG,DEFAULT_TARGET_DEV_HUB`,
+so it works with whichever org you set as the default (`--set-default` /
+`sf config set target-org <alias>`).
+
+### 4. Install the plugin in Claude Code
+
+Open Claude Code in your Salesforce DX project folder and run:
+
+```
+/plugin marketplace add /path/to/aidlc-sf-workflows/dist/plugins/salesforce/claude
+/plugin install aidlc-salesforce@aidlc-plugins
+```
+
+On Windows use the full path, for example
+`C:/Users/you/aidlc-sf-workflows/dist/plugins/salesforce/claude`.
+
+**Restart Claude Code twice.** The first start composes the plugin into the
+project. The second loads the newly added Salesforce stages and the
+`/salesforce-classic` command. Approve the project hooks and the
+`salesforce-dx` MCP server when Claude Code asks.
+
+If you can't use the plugin store, compose the plugin directly from your
+Salesforce DX project folder:
+
+```bash
+CLAUDE_PLUGIN_ROOT=/path/to/aidlc-sf-workflows/dist/plugins/salesforce/claude \
+CLAUDE_PROJECT_DIR="$PWD" AIDLC_HARNESS_DIR=.claude \
+  bun /path/to/aidlc-sf-workflows/dist/plugins/salesforce/claude/hooks/compose.ts
+```
+
+### 5. Verify and run
+
+In Claude Code:
+
+```
+/aidlc --doctor
+```
+
+Every `Plugin check (salesforce)` row must be `ok`. Doctor reports a missing MCP
+toolset, missing sf-skills, a missing `sf` CLI, or a missing recording hook as a
+failure, and each failure prints the command that fixes it.
+
+Then start a Salesforce workflow:
+
+```
+/salesforce-classic Build an LWC that lets service agents bulk-escalate Cases, backed by an Apex service
+```
+
+`/aidlc --scope salesforce-classic <request>` is equivalent. The workflow asks
+for one approval per stage. Org Validation deploys only to a scratch org or
+sandbox, and Release Deployment asks you to confirm the target org by name
+before it writes to it.
+
+### Updating
+
+```bash
+cd aidlc-sf-workflows && git pull && bun install && bun scripts/package.ts
+```
+
+Then re-run step 2 for each project, update the plugin from the `/plugin` menu in Claude Code (or
+the direct compose command above). Restart Claude Code so the plugin
+re-composes over the refreshed core.
+
+## Quick Start (upstream AWS release)
+
+The Quick Start below installs the latest stable upstream AI-DLC release, not
+this Salesforce fork.
 
 ### 1. Install AI-DLC
 
